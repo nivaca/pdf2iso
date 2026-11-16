@@ -30,12 +30,12 @@ preflight, which needs Acrobat Pro or callas pdfToolbox.
 Requirements: Ghostscript >= 10 (``gs``) and pikepdf.
 
 Examples:
-    pdfconform.py report.pdf                     # -> report_pdfa.pdf (PDF/A-2b)
-    pdfconform.py report.pdf -t a-1b -o archived.pdf
-    pdfconform.py *.pdf -d out/ --validate
-    pdfconform.py flyer.pdf -t x-4               # -> flyer_pdfx.pdf
-    pdfconform.py flyer.pdf -t x-4 --icc ISOcoated_v2_eci.icc --condition FOGRA39
-    pdfconform.py locked.pdf --password secret
+    py-pdfconform.py report.pdf                     # -> report_pdfa.pdf (PDF/A-2b)
+    py-pdfconform.py report.pdf -t a-1b -o archived.pdf
+    py-pdfconform.py *.pdf -d out/ --validate
+    py-pdfconform.py flyer.pdf -t x-4               # -> flyer_pdfx.pdf
+    py-pdfconform.py flyer.pdf -t x-4 --icc ISOcoated_v2_eci.icc --condition FOGRA39
+    py-pdfconform.py locked.pdf --password secret
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ MIN_PIKEPDF = 8
 MIN_GHOSTSCRIPT = (10, 0)
 
 if sys.version_info < MIN_PYTHON:
-    sys.stderr.write("error: pdfconform.py needs Python %d.%d or later; this is %d.%d\n"
+    sys.stderr.write("error: py-pdfconform.py needs Python %d.%d or later; this is %d.%d\n"
                      % (MIN_PYTHON + sys.version_info[:2]))
     sys.exit(2)
 
@@ -68,7 +68,7 @@ except ImportError:
         "error: the Python library pikepdf is missing. Install it with your\n"
         "system's package manager (python3-pikepdf on Fedora, Debian and\n"
         "Ubuntu) or with 'pip install pikepdf', or run the script with\n"
-        "'uv run pdfconform.py', which installs it by itself.\n")
+        "'uv run py-pdfconform.py', which installs it by itself.\n")
     sys.exit(2)
 if int(pikepdf.__version__.split(".")[0]) < MIN_PIKEPDF:
     sys.stderr.write(f"error: pikepdf {MIN_PIKEPDF} or later is needed; "

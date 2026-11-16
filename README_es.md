@@ -5,7 +5,7 @@ py-pdfconform
 
 py-pdfconform convierte archivos PDF a dos normas ISO: PDF/A, para el
 archivo a largo plazo (PDF/A-1b, PDF/A-2b y PDF/A-3b), y PDF/X-4, para la
-impresión.  Es un solo script de Python, `pdfconform.py`.  La conversión
+impresión.  Es un solo script de Python, `py-pdfconform.py`.  La conversión
 la hace Ghostscript; pikepdf abre antes los archivos cifrados o dañados y
 corrige después los metadatos.  Luego se comprueba cada resultado: los
 PDF/A con veraPDF, si está instalado, y los PDF/X-4 con una revisión
@@ -45,21 +45,21 @@ En macOS, con Homebrew:
 
 ### Obtener el programa
 
-Se copia `pdfconform.py` en cualquier carpeta y se ejecuta con `python3
-pdfconform.py`.  No hay que instalar nada más.  Con
+Se copia `py-pdfconform.py` en cualquier carpeta y se ejecuta con `python3
+py-pdfconform.py`.  No hay que instalar nada más.  Con
 [uv](https://docs.astral.sh/uv/), el script declara su propia
-dependencia, así que `uv run pdfconform.py ...` funciona sin instalar
+dependencia, así que `uv run py-pdfconform.py ...` funciona sin instalar
 antes pikepdf (Ghostscript sigue haciendo falta).
 
 Uso
 ---
 
-    python3 pdfconform.py informe.pdf                 # informe_pdfa.pdf, PDF/A-2b
-    python3 pdfconform.py informe.pdf -t a-1b -o archivado.pdf
-    python3 pdfconform.py *.pdf -d convertidos/ --validate
-    python3 pdfconform.py cerrado.pdf -p secreto      # archivo cifrado
-    python3 pdfconform.py volante.pdf -t x-4          # volante_pdfx.pdf, PDF/X-4
-    python3 pdfconform.py volante.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
+    python3 py-pdfconform.py informe.pdf                 # informe_pdfa.pdf, PDF/A-2b
+    python3 py-pdfconform.py informe.pdf -t a-1b -o archivado.pdf
+    python3 py-pdfconform.py *.pdf -d convertidos/ --validate
+    python3 py-pdfconform.py cerrado.pdf -p secreto      # archivo cifrado
+    python3 py-pdfconform.py volante.pdf -t x-4          # volante_pdfx.pdf, PDF/X-4
+    python3 py-pdfconform.py volante.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
 
 El archivo de salida queda junto al de entrada, con `_pdfa` o `_pdfx`
 añadido al nombre, salvo que `-o` o `-d` digan otra cosa.  El programa

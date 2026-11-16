@@ -69,7 +69,7 @@ annotations.  It is not a complete preflight, and the README says so.
 -------------
 
 With two standards, `py-pdfa` was no longer an accurate name.  The project
-became `py-pdfconform`, and the script `pdfconform.py`, which describes
+became `py-pdfconform`, and the script `py-pdfconform.py`, which describes
 what it does (making a PDF conform to a standard) and would still fit if
 other standards were added.  The option `-l` (level) became `-t`
 (target), which accepts `a-2b`, `x-4` and other spellings such as

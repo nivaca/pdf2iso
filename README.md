@@ -5,7 +5,7 @@ py-pdfconform
 
 py-pdfconform converts PDF files to two ISO standards: PDF/A, for
 long-term archiving (PDF/A-1b, PDF/A-2b and PDF/A-3b), and PDF/X-4, for
-printing.  It is a single Python script, `pdfconform.py`.  The conversion
+printing.  It is a single Python script, `py-pdfconform.py`.  The conversion
 itself is done by Ghostscript; pikepdf opens encrypted or damaged files
 before it, and corrects the metadata after it.  Each result is then
 checked: PDF/A files with veraPDF, if it is installed, and PDF/X-4 files
@@ -45,21 +45,21 @@ On macOS, with Homebrew:
 
 ### Getting the program
 
-Copy `pdfconform.py` anywhere and run it with `python3 pdfconform.py`.
+Copy `py-pdfconform.py` anywhere and run it with `python3 py-pdfconform.py`.
 There is nothing else to install.  If you use
 [uv](https://docs.astral.sh/uv/), the script declares its own dependency,
-so `uv run pdfconform.py ...` works without installing pikepdf first
+so `uv run py-pdfconform.py ...` works without installing pikepdf first
 (Ghostscript is still needed).
 
 Usage
 -----
 
-    python3 pdfconform.py report.pdf                  # report_pdfa.pdf, PDF/A-2b
-    python3 pdfconform.py report.pdf -t a-1b -o archived.pdf
-    python3 pdfconform.py *.pdf -d converted/ --validate
-    python3 pdfconform.py locked.pdf -p secret        # encrypted file
-    python3 pdfconform.py flyer.pdf -t x-4            # flyer_pdfx.pdf, PDF/X-4
-    python3 pdfconform.py flyer.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
+    python3 py-pdfconform.py report.pdf                  # report_pdfa.pdf, PDF/A-2b
+    python3 py-pdfconform.py report.pdf -t a-1b -o archived.pdf
+    python3 py-pdfconform.py *.pdf -d converted/ --validate
+    python3 py-pdfconform.py locked.pdf -p secret        # encrypted file
+    python3 py-pdfconform.py flyer.pdf -t x-4            # flyer_pdfx.pdf, PDF/X-4
+    python3 py-pdfconform.py flyer.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
 
 The output file goes next to the input, with `_pdfa` or `_pdfx` added to
 its name, unless `-o` or `-d` says otherwise.  The program never writes
