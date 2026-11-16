@@ -1,0 +1,33 @@
+# py-pdfconform: descripción
+
+## Análisis
+
+py-pdfconform convierte archivos PDF a PDF/A, la norma ISO para el archivo a largo plazo (niveles 1b, 2b y 3b), y a PDF/X-4, la norma ISO para la impresión. Comenzó como `py-pdfa`, un conversor solo a PDF/A, y cambió de nombre cuando se le añadió PDF/X-4. py-pdfconform no convierte nada por sí mismo: la conversión la hace Ghostscript, y el programa prepara la entrada, corrige lo que Ghostscript deja mal y comprueba el resultado. Es software libre, bajo la Licencia Pública General de GNU, versión 3 o posterior.
+
+Los requisitos salieron de lo que piden las dos normas y de lo que pasa en la práctica con los PDF reales. El resultado tenía que ser válido, y el programa tenía que poder demostrarlo, no solo suponerlo. Tenía que aceptar cualquier PDF: cifrados, con tablas internas dañadas, sin fuentes incrustadas, con transparencias, capas, adjuntos o JavaScript. No debía perder en silencio nada que importe al usuario (el título, los enlaces, el texto seleccionable), y cuando la norma obliga a perder algo, tenía que decirlo. Por último, debía ser fácil de instalar y de usar en lote, sobre muchos archivos a la vez.
+
+## Diseño
+
+Es un solo script, `pdfconform.py`, de unas 800 líneas, que funciona en cuatro pasos. Primero, pikepdf abre la entrada (con la contraseña, si la tiene) y guarda una copia limpia, sin cifrar, con las anotaciones marcadas como imprimibles; si no se marcan, Ghostscript borra, entre otras cosas, los enlaces que hace pdfLaTeX. Segundo, el dispositivo `pdfwrite` de Ghostscript escribe de nuevo el archivo según la norma (`-dPDFA` o `-dPDFX`), con un pequeño archivo PostScript que el programa genera en cada conversión para adjuntar el perfil ICC como intención de salida: sRGB para PDF/A, un perfil CMYK para PDF/X. Tercero, pikepdf corrige el resultado. Cuarto, se comprueba.
+
+El tercer paso es el que más trabajo tuvo, porque Ghostscript deja varias cosas mal sin avisar. En PDF/X-4 a veces no escribe `pdf:Trapped` en los metadatos XMP; en PDF/A-3b escribe mal el tipo MIME de los adjuntos ("text/csv" se vuelve `text#2?csv`); conserva adjuntos que PDF/A-1b y PDF/A-2b no admiten, y ajustes automáticos de las capas que ambas normas prohíben; y mueve el JavaScript de apertura a una entrada no estándar del catálogo, `/A`, donde veraPDF no mira, de modo que el archivo pasa la validación con el script dentro. El programa corrige cada uno de estos casos (y, por precaución, repone el título, el autor y los demás datos del documento si Ghostscript los pierde), y avisa cuando tiene que quitar algo: adjuntos, JavaScript, anotaciones o el texto de las páginas que PDF/A-1b convierte en imagen.
+
+Las opciones son pocas. `-t` elige la norma (`a-1b`, `a-2b`, que es la opción por omisión, `a-3b` o `x-4`, y también acepta grafías como `PDF/A-2b`). Para PDF/X-4, `--icc` y `--condition` dan el perfil CMYK de la imprenta y el nombre registrado de su condición de impresión (FOGRA39, FOGRA51...); sin ellas, el programa usa el perfil CMYK que trae Ghostscript, parecido a SWOP, y llama `Custom` a la condición. El programa comprueba que el perfil tenga el espacio de color correcto. Antes de tocar ningún archivo, el programa comprueba sus dependencias (las versiones de Python, pikepdf y Ghostscript, el perfil ICC y, si se pide, veraPDF) y, si falta algo, dice qué falta y cómo conseguirlo. El código de salida (0, 1 o 2) permite usarlo dentro de otros scripts.
+
+## Validación
+
+Los PDF/A se validan con veraPDF, el validador de referencia de la PDF Association, si está instalado; con `--validate`, su ausencia es un error. veraPDF no valida PDF/X, y no hay un validador libre que lo haga, así que escribí una revisión estructural para PDF/X-4: la versión de PDF/X en los metadatos, el título, las fechas e identificadores, `Trapped`, la intención de salida y su perfil, las cajas de cada página y las anotaciones. No es una verificación previa completa, que necesita Acrobat Pro o callas pdfToolbox, y el README lo dice.
+
+Lo probé con siete archivos: un documento de pdfLaTeX con transparencias y un enlace; el mismo documento cifrado con AES-256; un PDF hecho a mano con una fuente Helvetica sin incrustar y color CMYK; un PDF sin título; las primeras cinco páginas de un documento de 394 páginas hecho con WeasyPrint, con imágenes, marcadores y enlaces; un documento con un CSV adjunto y una acción de JavaScript, y un documento de LaTeX con capas. Cada uno se convirtió a las cuatro normas, y los 28 resultados pasan: los 21 PDF/A con veraPDF, los 7 PDF/X-4 con la revisión estructural. La revisión misma se probó con archivos que debían fallarla (los originales y archivos PDF/A), y los rechazó. En los PDF/X-4 comprobé además, por dentro, que los colores sean solo CMYK, que el texto se pueda extraer y que las transparencias sigan ahí.
+
+Fueron estas pruebas, y no la lectura de la documentación, las que encontraron los problemas de Ghostscript descritos arriba. La documentación de Ghostscript se contradice incluso sobre si admite PDF/X-4: un párrafo dice que `-dPDFX` acepta 1, 3 o 4, y una advertencia poco más abajo dice que solo se admiten PDF/X-1 y PDF/X-3. En la práctica, Ghostscript 10.07 produce PDF/X-4 correcto.
+
+## Plataforma
+
+Está pensado para Linux, macOS y Windows: en Windows busca la orden `gswin64c`, y en los tres sistemas busca los perfiles ICC en las carpetas habituales de Ghostscript. Solo se ha probado en Linux. Necesita Python 3.10 o superior, Ghostscript 10 o superior y la biblioteca pikepdf; veraPDF es opcional. Es un programa de línea de órdenes, sin interfaz gráfica, y no necesita internet.
+
+## Ambiente
+
+Lo desarrollé en Fedora Linux 45, con Python 3.15, Ghostscript 10.07, pikepdf y veraPDF 1.30.4, y con git, con repositorios en GitHub y Codeberg.
+
+Para usarlo basta copiar `pdfconform.py` y ejecutarlo (`python3 pdfconform.py archivo.pdf`), con Ghostscript y pikepdf instalados (en Fedora, `sudo dnf install ghostscript python3-pikepdf`). Con uv, `uv run pdfconform.py` instala pikepdf por su cuenta, porque el script declara su dependencia.

@@ -3,6 +3,8 @@
 # requires-python = ">=3.10"
 # dependencies = ["pikepdf>=8"]
 # ///
+# py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
+# SPDX-License-Identifier: GPL-3.0-or-later (see LICENCE.txt)
 """Convert PDF files to PDF/A (archiving) or PDF/X-4 (printing).
 
 Targets:
@@ -50,7 +52,28 @@ import warnings as warnings_module
 from dataclasses import dataclass
 from pathlib import Path
 
-import pikepdf
+MIN_PYTHON = (3, 10)
+MIN_PIKEPDF = 8
+MIN_GHOSTSCRIPT = (10, 0)
+
+if sys.version_info < MIN_PYTHON:
+    sys.stderr.write("error: pdfconform.py needs Python %d.%d or later; this is %d.%d\n"
+                     % (MIN_PYTHON + sys.version_info[:2]))
+    sys.exit(2)
+
+try:
+    import pikepdf
+except ImportError:
+    sys.stderr.write(
+        "error: the Python library pikepdf is missing. Install it with your\n"
+        "system's package manager (python3-pikepdf on Fedora, Debian and\n"
+        "Ubuntu) or with 'pip install pikepdf', or run the script with\n"
+        "'uv run pdfconform.py', which installs it by itself.\n")
+    sys.exit(2)
+if int(pikepdf.__version__.split(".")[0]) < MIN_PIKEPDF:
+    sys.stderr.write(f"error: pikepdf {MIN_PIKEPDF} or later is needed; "
+                     f"this is {pikepdf.__version__}\n")
+    sys.exit(2)
 
 
 @dataclass(frozen=True)
@@ -140,12 +163,40 @@ def parse_target(text: str) -> Target:
 
 
 def find_ghostscript() -> str:
+    """Find the Ghostscript command and check that it is recent enough."""
     names = ["gswin64c", "gswin32c", "gs"] if os.name == "nt" else ["gs"]
-    for name in names:
-        path = shutil.which(name)
-        if path:
-            return path
-    raise ConversionError("Ghostscript not found (looked for: %s)" % ", ".join(names))
+    path = next(filter(None, map(shutil.which, names)), None)
+    if path is None:
+        raise ConversionError("Ghostscript not found (looked for: %s); install it "
+                              "(the package is called ghostscript on most systems)"
+                              % ", ".join(names))
+    try:
+        out = subprocess.run([path, "--version"], capture_output=True, text=True,
+                             timeout=30).stdout.strip()
+        version = tuple(int(n) for n in re.findall(r"\d+", out)[:2])
+    except (OSError, subprocess.SubprocessError, ValueError):
+        version = ()
+    if len(version) < 2:
+        raise ConversionError(f"cannot tell the version of Ghostscript ({path})")
+    if version < MIN_GHOSTSCRIPT:
+        raise ConversionError("Ghostscript %d.%d or later is needed; %s is %s"
+                              % (MIN_GHOSTSCRIPT + (path, out)))
+    return path
+
+
+def find_verapdf(explicit: str | None, required: bool) -> str | None:
+    """Find the veraPDF command; None if it is not there and not required."""
+    if explicit:
+        path = shutil.which(explicit)
+        if path is None:
+            raise ConversionError(f"veraPDF not found at {explicit}")
+        return path
+    path = shutil.which("verapdf")
+    if path is None and required:
+        raise ConversionError("--validate given but veraPDF was not found; install it "
+                              "from https://verapdf.org/software/ or give its path "
+                              "with --verapdf")
+    return path
 
 
 @dataclass(frozen=True)
@@ -264,6 +315,121 @@ class SourceFacts:
     info: dict[str, str]
     text_pages: int
     annotations: int
+    mime_types: dict[str, str]  # attached file name -> MIME type
+
+
+MIME_RE = re.compile(r"[a-z]+/[a-z0-9][a-z0-9.+_-]*", re.IGNORECASE)
+
+
+def attachment_mime_types(pdf: pikepdf.Pdf) -> dict[str, str]:
+    types = {}
+    for name, spec in pdf.attachments.items():
+        try:
+            mime = spec.get_file().mime_type
+        except Exception:
+            mime = ""
+        if MIME_RE.fullmatch(mime or ""):
+            types[name] = mime
+    return types
+
+
+def remove_attachments(pdf: pikepdf.Pdf) -> int:
+    """Remove embedded files (document-level and in annotations)."""
+    count = len(pdf.attachments)
+    names = pdf.Root.get("/Names")
+    if names is not None and "/EmbeddedFiles" in names:
+        del names["/EmbeddedFiles"]
+    if "/AF" in pdf.Root:
+        del pdf.Root["/AF"]
+    for page in pdf.pages:
+        annots = page.obj.get("/Annots")
+        if annots is None:
+            continue
+        keep = [a for a in annots if a.get("/Subtype") != pikepdf.Name.FileAttachment]
+        count += len(annots) - len(keep)
+        page.obj.Annots = pikepdf.Array(keep)
+    return count
+
+
+def fix_attachments(pdf: pikepdf.Pdf, mime_types: dict[str, str]) -> None:
+    """Give every attached file a valid MIME type and an AFRelationship, and
+    list it in the catalog's AF array, as PDF/A-3 requires. Ghostscript
+    garbles the MIME type ("text/csv" becomes "text#2?csv")."""
+    specs = []
+    for name, spec in pdf.attachments.items():
+        obj = spec.obj
+        stream = obj.get("/EF", {}).get("/F")
+        if stream is not None:
+            current = str(stream.get("/Subtype", "")).lstrip("/")
+            if not MIME_RE.fullmatch(current):
+                mime = mime_types.get(name, "application/octet-stream")
+                stream.Subtype = pikepdf.Name("/" + mime)
+        if "/AFRelationship" not in obj:
+            obj.AFRelationship = pikepdf.Name.Unspecified
+        specs.append(obj)
+    if specs:
+        af = pdf.Root.get("/AF", pikepdf.Array())
+        listed = {s.objgen for s in af if s.is_indirect}
+        for spec in specs:
+            if not spec.is_indirect:
+                continue
+            if spec.objgen not in listed:
+                af.append(spec)
+        pdf.Root.AF = af
+
+
+def remove_javascript(pdf: pikepdf.Pdf) -> int:
+    """Remove JavaScript, which neither standard allows. Ghostscript moves a
+    JavaScript OpenAction to a non-standard /A entry of the catalog, where
+    validators do not look, so check the catalog, the pages and the
+    annotations. Returns the number of actions removed."""
+    def is_js(action) -> bool:
+        return (isinstance(action, pikepdf.Dictionary)
+                and action.get("/S") == pikepdf.Name.JavaScript)
+
+    count = 0
+    root = pdf.Root
+    for key in ("/A", "/OpenAction"):
+        if is_js(root.get(key)):
+            del root[key]
+            count += 1
+    names = root.get("/Names")
+    if names is not None and "/JavaScript" in names:
+        del names["/JavaScript"]
+        count += 1
+    holders = [root] + [page.obj for page in pdf.pages]
+    for page in pdf.pages:
+        holders += [a for a in page.obj.get("/Annots", [])
+                    if isinstance(a, pikepdf.Dictionary)]
+    for holder in holders:
+        if "/AA" in holder:       # additional actions: triggers, often scripts
+            del holder["/AA"]
+            count += 1
+        if is_js(holder.get("/A")):
+            del holder["/A"]
+            count += 1
+    return count
+
+
+def fix_optional_content(pdf: pikepdf.Pdf) -> bool:
+    """Layers: PDF/A and PDF/X want a Name in every optional content
+    configuration and no AS (automatic state) entries. Returns True if
+    anything was changed."""
+    props = pdf.Root.get("/OCProperties")
+    if props is None:
+        return False
+    changed = False
+    configs = [props.get("/D")] + list(props.get("/Configs", []))
+    for number, config in enumerate(configs):
+        if not isinstance(config, pikepdf.Dictionary):
+            continue
+        if not str(config.get("/Name", "")).strip():
+            config.Name = pikepdf.String("Default" if number == 0 else f"Configuration {number}")
+            changed = True
+        if "/AS" in config:
+            del config["/AS"]
+            changed = True
+    return changed
 
 
 # --------------------------------------------------------------------------
@@ -276,10 +442,15 @@ def prepare_input(src: Path, dst: Path, password: str) -> SourceFacts:
     try:
         with pikepdf.open(src, password=password) as pdf:
             facts = SourceFacts(read_info(pdf), pages_with_text(pdf),
-                                count_annotations(pdf))
+                                count_annotations(pdf),
+                                attachment_mime_types(pdf))
             set_print_flags(pdf)
             # Saving without encryption also rewrites damaged xref tables.
-            pdf.save(dst, encryption=False)
+            # pikepdf may warn about the input's own oddities (e.g. form
+            # widgets outside /AcroForm); they are not ours to report.
+            with warnings_module.catch_warnings():
+                warnings_module.simplefilter("ignore")
+                pdf.save(dst, encryption=False)
     except pikepdf.PasswordError:
         raise ConversionError(f"{src} is encrypted; supply the password with --password")
     except pikepdf.PdfError as exc:
@@ -365,6 +536,19 @@ def finalize(path: Path, dst: Path, target: Target, facts: SourceFacts,
                    if target.family == "X" else "Ghostscript could not keep them")
             warnings.append(f"{lost} annotation(s) (links, comments, form fields) "
                             f"were removed: {why}")
+
+        if target.family == "A" and target.part < 3:
+            removed = remove_attachments(pdf)
+            if removed:
+                why = ("PDF/A-1 does not allow them" if target.part == 1 else
+                       "PDF/A-2 only allows attached files that are PDF/A themselves")
+                warnings.append(f"{removed} attached file(s) were removed: {why}; "
+                                "use -t a-3b to keep them")
+        else:
+            fix_attachments(pdf, facts.mime_types)
+        fix_optional_content(pdf)
+        if remove_javascript(pdf):
+            warnings.append(f"JavaScript was removed: {target.name} does not allow it")
 
         for key, value in facts.info.items():
             if key not in pdf.docinfo or not str(pdf.docinfo[key]).strip():
@@ -555,19 +739,15 @@ def main(argv: list[str] | None = None) -> int:
     if target.family == "A" and args.condition != "Custom":
         ap.error("--condition only applies to PDF/X")
 
+    # Check every dependency before touching any file.
     try:
         gs = find_ghostscript()
         icc = find_icc_profile(args.icc, target)
+        verapdf = (find_verapdf(args.verapdf, args.validate)
+                   if target.family == "A" else None)
     except ConversionError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-
-    verapdf = None
-    if target.family == "A":
-        verapdf = args.verapdf or shutil.which("verapdf")
-        if args.validate and not verapdf:
-            print("error: --validate given but veraPDF was not found", file=sys.stderr)
-            return 2
 
     suffix = args.suffix if args.suffix is not None else target.suffix
     failures = 0
