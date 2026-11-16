@@ -52,6 +52,8 @@ import warnings as warnings_module
 from dataclasses import dataclass
 from pathlib import Path
 
+VERSION = "1.0"
+
 MIN_PYTHON = (3, 10)
 MIN_PIKEPDF = 8
 MIN_GHOSTSCRIPT = (10, 0)
@@ -537,13 +539,20 @@ def finalize(path: Path, dst: Path, target: Target, facts: SourceFacts,
             warnings.append(f"{lost} annotation(s) (links, comments, form fields) "
                             f"were removed: {why}")
 
-        if target.family == "A" and target.part < 3:
+        if target.family == "X" or target.part < 3:
             removed = remove_attachments(pdf)
             if removed:
-                why = ("PDF/A-1 does not allow them" if target.part == 1 else
-                       "PDF/A-2 only allows attached files that are PDF/A themselves")
-                warnings.append(f"{removed} attached file(s) were removed: {why}; "
-                                "use -t a-3b to keep them")
+                if target.family == "X":
+                    # Whether PDF/X-4 allows them is not clear from public
+                    # sources; a file for the printer does not need them.
+                    why = "a file for printing should not carry them"
+                elif target.part == 1:
+                    why = ("PDF/A-1 does not allow them; "
+                           "use -t a-3b to keep them")
+                else:
+                    why = ("PDF/A-2 only allows attached files that are PDF/A "
+                           "themselves; use -t a-3b to keep them")
+                warnings.append(f"{removed} attached file(s) were removed: {why}")
         else:
             fix_attachments(pdf, facts.mime_types)
         fix_optional_content(pdf)
@@ -625,6 +634,8 @@ def check_pdfx4(path: Path) -> list[str]:
     with pikepdf.open(path) as pdf:
         if pdf.is_encrypted:
             problems.append("file is encrypted")
+        if len(pdf.attachments):
+            problems.append("file has attached files")
 
         meta = pdf.open_metadata()
         if meta.get(f"{{{NS_PDFXID}}}GTS_PDFXVersion") != "PDF/X-4":
@@ -729,6 +740,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="PDF/A only: validate with veraPDF and fail if it is missing "
                          "(PDF/X-4 output is always given a built-in structural check)")
     ap.add_argument("--verapdf", help="path to the veraPDF command-line tool")
+    ap.add_argument("--version", action="version",
+                    version=f"py-pdfconform {VERSION}")
     ap.add_argument("-v", "--verbose", action="store_true",
                     help="show Ghostscript and validator output")
     args = ap.parse_args(argv)

@@ -79,6 +79,7 @@ warnings go before it.
 | `--validate` | PDF/A only: stop with an error if veraPDF is not found, instead of converting without validating. |
 | `--verapdf` | The path of the veraPDF command, if it is not on the PATH. |
 | `-v`, `--verbose` | Show the messages of Ghostscript and of veraPDF. |
+| `--version` | Show the version of the program. |
 
 Before touching any file, the program checks what it needs: Python 3.10
 or later, pikepdf 8 or later, Ghostscript 10 or later, a usable ICC
@@ -111,7 +112,9 @@ attached, so the attachments of the input are kept.
 CMYK for one printing condition (see the next section), transparency is
 kept, and each page gets a TrimBox and a BleedBox.  Links, comments and
 other annotations are removed, because PDF/X does not allow them on the
-printed page; the program says how many it removed.
+printed page; the program says how many it removed.  Attached files are
+removed too: a file for the printer has no use for them, and the public
+descriptions of PDF/X-4 do not make clear whether it allows them.
 
 The "b" in the PDF/A levels means that the appearance of the pages is
 preserved.  The "a" and "u" levels need, in addition, a tagged structure
@@ -167,7 +170,7 @@ The conversion has four steps.
    standards require.  It also corrects what Ghostscript leaves wrong or
    behind: it removes JavaScript (Ghostscript moves it to a place where
    validators do not look), gives attached files a valid MIME type, takes
-   out the attachments that PDF/A-1b and PDF/A-2b do not allow, and
+   out the attachments in every target except PDF/A-3b, and
    removes from the layers the automatic settings that both standards
    forbid.  For PDF/X-4 it also sets the title (the file name, if the
    document has none), `Trapped` and `GTS_PDFXVersion`.

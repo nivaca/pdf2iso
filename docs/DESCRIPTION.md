@@ -109,10 +109,26 @@ same document encrypted with AES-256; a PDF made by hand with an
 unembedded Helvetica font and CMYK colour; a PDF without a title; the
 first five pages of a document of 394 pages made by WeasyPrint, with
 images, an outline and links; a document with an attached CSV file and a
-JavaScript action; and a LaTeX document with layers.  Each was converted to
-the four targets.  All the PDF/A results pass veraPDF, and all the PDF/X-4
+JavaScript action; a LaTeX document with layers; and a LaTeX document
+with an RGB photograph, a PNG with transparency, a CMYK JPEG and colour
+gradients.  Each was converted to the four targets.  All the PDF/A results pass veraPDF, and all the PDF/X-4
 results pass the structural check.  The check itself was tested on files
 that should fail it (the original documents and PDF/A files), and it
 failed them.  I also looked at the PDF/X-4 results inside: the colours
 are only CMYK, the text can be extracted, and the transparency is still
-there.  The program has one file of around 800 lines.
+there.
+
+Later I checked the PDF/X-4 results more closely.  A separate scan looked
+for RGB colour anywhere in the files (also in transparency groups and soft
+masks), fonts not embedded, a missing trailer ID, dates in the XMP
+metadata that differ from those of the Info dictionary, and the features
+PDF/X forbids; it found nothing.  Every page was rendered before and after
+the conversion and compared: nothing was lost or moved.  Bright screen
+colours come out duller, since CMYK ink cannot print them; to be sure the
+conversion itself was right, I converted the same colours with littleCMS
+and the same CMYK profile, and Ghostscript's results agree within a few
+units.  The scan did find that the attached file was kept.  Whether
+PDF/X-4 allows attachments could not be confirmed from public sources, so
+the program now removes them in PDF/X-4 too, with a warning, and the
+structural check rejects a PDF/X-4 file that has one.  The program has one
+file of around 800 lines.

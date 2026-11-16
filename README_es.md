@@ -79,6 +79,7 @@ conversión; las advertencias van antes.
 | `--validate` | Solo PDF/A: termina con un error si no encuentra veraPDF, en lugar de convertir sin validar. |
 | `--verapdf` | La ruta de la orden de veraPDF, si no está en el PATH. |
 | `-v`, `--verbose` | Muestra los mensajes de Ghostscript y de veraPDF. |
+| `--version` | Muestra la versión del programa. |
 
 Antes de tocar ningún archivo, el programa comprueba lo que necesita:
 Python 3.10 o superior, pikepdf 8 o superior, Ghostscript 10 o superior,
@@ -112,7 +113,9 @@ tipo, así que conserva los del archivo de entrada.
 a CMYK para una condición de impresión (véase la sección siguiente), las
 transparencias se conservan y cada página recibe un TrimBox y un BleedBox.
 Los enlaces, comentarios y demás anotaciones se quitan, porque PDF/X no
-los admite en la página impresa; el programa dice cuántos quitó.
+los admite en la página impresa; el programa dice cuántos quitó.  También
+se quitan los adjuntos: a la imprenta no le sirven, y las descripciones
+públicas de PDF/X-4 no dejan claro si los admite.
 
 La "b" de los niveles de PDF/A indica que se conserva el aspecto de las
 páginas.  Los niveles "a" y "u" exigen además una estructura etiquetada y
@@ -166,8 +169,8 @@ La conversión tiene cuatro pasos.
    documento, como exigen ambas normas.  También corrige lo que
    Ghostscript deja mal o deja atrás: quita el JavaScript (Ghostscript lo
    mueve a un lugar donde los validadores no miran), da a los adjuntos un
-   tipo MIME válido, quita los adjuntos que PDF/A-1b y PDF/A-2b no
-   admiten y elimina de las capas los ajustes automáticos que ambas
+   tipo MIME válido, quita los adjuntos en todas las normas salvo
+   PDF/A-3b y elimina de las capas los ajustes automáticos que ambas
    normas prohíben.  Para PDF/X-4 fija además el título (el nombre del
    archivo, si el documento no tiene), `Trapped` y `GTS_PDFXVersion`.
 4. Se comprueba el resultado (véase la sección siguiente).
