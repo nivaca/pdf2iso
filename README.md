@@ -206,6 +206,35 @@ Limitations
   standard to choose").
 - Only the "b" levels of PDF/A are produced.
 
+Making a release
+----------------
+
+The ZIP of the program is made with
+
+    $ python3 tools/bundle-zip.py [-o FOLDER]
+
+It writes `dist/py-pdfconform-v.1.0.zip` (with the `VERSION` of
+`py-pdfconform.py`; `-o` gives another folder), with the program inside a
+folder of the same name.  It contains the script, the licence and the
+documents, and a file `COMMIT` with the commit it was made from.  It does
+not contain hidden files (`.git` ...), nor what is made while the program
+runs or is edited (`__pycache__` ...), nor `dist/` and `tools/`.
+
+A release on GitHub and Codeberg, with the ZIP, is made with
+
+    $ python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
+          [--no-build] [--only github|codeberg] [--dry-run] [--yes]
+
+It needs `gh` (GitHub) and `tea` (Codeberg), and a clean `main`.  It makes
+the ZIP, tags the commit `vVERSION`, pushes `main` and the tag, and makes
+the release on each forge (or keeps the existing one), attaching the ZIP
+and replacing one of the same name.  If releases are switched off for the
+repository on Codeberg, it switches them on first.  It shows the commands
+and asks before running them; `--dry-run` only shows them.  For a new
+release, raise `VERSION` in `py-pdfconform.py` first: if the tag is on
+another commit, the script stops, unless `--redo` moves it, which remakes
+a release.
+
 Licensing
 ---------
 

@@ -206,6 +206,35 @@ Limitaciones
   "Qué norma elegir").
 - Solo se producen los niveles "b" de PDF/A.
 
+Publicar una versión
+--------------------
+
+El ZIP del programa se hace con
+
+    $ python3 tools/bundle-zip.py [-o CARPETA]
+
+Escribe `dist/py-pdfconform-v.1.0.zip` (con la `VERSION` de
+`py-pdfconform.py`; `-o` da otra carpeta), con el programa dentro de una
+carpeta del mismo nombre.  Contiene el script, la licencia y los
+documentos, y un archivo `COMMIT` con el commit del que se hizo.  No
+contiene archivos ocultos (`.git`...), ni lo que se genera al ejecutar o
+editar el programa (`__pycache__`...), ni `dist/` y `tools/`.
+
+Una versión en GitHub y Codeberg, con el ZIP, se publica con
+
+    $ python3 tools/release.py [--redo] [--notes TEXTO | --notes-file ARCHIVO]
+          [--no-build] [--only github|codeberg] [--dry-run] [--yes]
+
+Necesita `gh` (GitHub) y `tea` (Codeberg), y una rama `main` limpia.  Hace
+el ZIP, etiqueta el commit como `vVERSION`, sube `main` y la etiqueta, y
+crea la versión en cada forja (o conserva la que ya existe), le adjunta
+el ZIP y reemplaza el que tenga el mismo nombre.  Si el repositorio de
+Codeberg tiene las versiones desactivadas, primero las activa.  Muestra
+las órdenes y pregunta antes de ejecutarlas; `--dry-run` solo las
+muestra.  Para una versión nueva hay que subir antes `VERSION` en
+`py-pdfconform.py`: si la etiqueta está en otro commit, el script se
+detiene, salvo que `--redo` la mueva, lo que rehace una versión.
+
 Licencia
 --------
 
