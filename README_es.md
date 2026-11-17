@@ -62,7 +62,7 @@ descomprime el programa donde vaya a quedarse y se ejecuta
 
 Esto crea un enlace simbólico a `py-pdfconform.py`, llamado
 `py-pdfconform`, en `~/bin` si esa carpeta existe, o si no en
-`~/.local/share/bin` (que se crea si hace falta).  No copia nada ni necesita
+`~/.local/bin` (que se crea si hace falta).  No copia nada ni necesita
 permisos de administrador, así que la carpeta del programa debe quedarse
 donde está; si se mueve, hay que volver a ejecutar `./install.sh`.  El
 instalador avisa si la carpeta del enlace no está en el PATH, y dice cómo
@@ -235,7 +235,7 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/py-pdfconform-v.1.2.1.zip` (con la `VERSION` de
+Escribe `dist/py-pdfconform-v.1.2.2.zip` (con la `VERSION` de
 `py-pdfconform.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No

@@ -1,4 +1,4 @@
-# py-pdfconform 1.2.1: descripción
+# py-pdfconform 1.2.2: descripción
 
 ## Análisis
 
@@ -46,4 +46,4 @@ Está pensado para Linux, macOS y Windows: en Windows busca la orden `gswin64c`,
 
 Lo desarrollé en Fedora Linux 45, con Python 3.15, Ghostscript 10.07, pikepdf y veraPDF 1.30.4, y con git, con repositorios en GitHub y Codeberg.
 
-Para usarlo basta copiar `py-pdfconform.py` y ejecutarlo (`python3 py-pdfconform.py archivo.pdf`), con Ghostscript y pikepdf instalados (en Fedora, `sudo dnf install ghostscript python3-pikepdf`). En Linux, `./install.sh` lo deja disponible como la orden `py-pdfconform`, con un enlace simbólico en `~/bin` o, si no existe, en `~/.local/share/bin`. Con uv, `uv run py-pdfconform.py` instala pikepdf por su cuenta, porque el script declara su dependencia.
+Para usarlo basta copiar `py-pdfconform.py` y ejecutarlo (`python3 py-pdfconform.py archivo.pdf`), con Ghostscript y pikepdf instalados (en Fedora, `sudo dnf install ghostscript python3-pikepdf`). En Linux, `./install.sh` lo deja disponible como la orden `py-pdfconform`, con un enlace simbólico en `~/bin` o, si no existe, en `~/.local/bin`. Con uv, `uv run py-pdfconform.py` instala pikepdf por su cuenta, porque el script declara su dependencia.

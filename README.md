@@ -61,8 +61,8 @@ will stay and run
     $ ./install.sh
 
 This makes a symbolic link to `py-pdfconform.py`, called `py-pdfconform`,
-in `~/bin` if that folder exists, or else in `~/.local/share/bin` (made if
-need be).  Nothing is copied and nothing needs root, so the program's folder
+in `~/bin` if that folder exists, or else in `~/.local/bin` (made if need
+be).  Nothing is copied and nothing needs root, so the program's folder
 must stay where it is; after moving it, run `./install.sh` again.  The
 installer says if the folder of the link is not in your PATH, and how to
 add it, and at the end it runs `py-pdfconform --version` to see that
@@ -235,7 +235,7 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `dist/py-pdfconform-v.1.2.1.zip` (with the `VERSION` of
+It writes `dist/py-pdfconform-v.1.2.2.zip` (with the `VERSION` of
 `py-pdfconform.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does

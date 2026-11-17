@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Installs py-pdfconform as a command for this user (Linux):
 #
-#     ./install.sh               link ~/bin/py-pdfconform (or ~/.local/share/bin/...)
+#     ./install.sh               link ~/bin/py-pdfconform (or ~/.local/bin/...)
 #     ./install.sh --uninstall   remove that link
 #
 # The command is a symbolic link to py-pdfconform.py in this folder, so
 # the folder must stay where it is; after moving it, run ./install.sh
 # again.  The link goes in ~/bin if that folder exists, and otherwise in
-# ~/.local/share/bin (made if need be).  Nothing is copied, and nothing needs
+# ~/.local/bin (made if need be).  Nothing is copied, and nothing needs
 # root.
 #
 # py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
@@ -31,7 +31,7 @@ die() {
 if [[ -d "$HOME/bin" ]]; then
     BIN="$HOME/bin"
 else
-    BIN="$HOME/.local/share/bin"
+    BIN="$HOME/.local/bin"
 fi
 LINK="$BIN/$NAME"
 
