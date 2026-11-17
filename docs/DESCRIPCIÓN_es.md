@@ -14,6 +14,18 @@ El tercer paso es el que más trabajo tuvo, porque Ghostscript deja varias cosas
 
 Las opciones son pocas. `-t` elige la norma (`a-1b`, `a-2b`, que es la opción por omisión, `a-3b` o `x-4`, y también acepta grafías como `PDF/A-2b`). Para PDF/X-4, `--icc` y `--condition` dan el perfil CMYK de la imprenta y el nombre registrado de su condición de impresión (FOGRA39, FOGRA51...); sin ellas, el programa usa el perfil CMYK que trae Ghostscript, parecido a SWOP, y llama `Custom` a la condición. El programa comprueba que el perfil tenga el espacio de color correcto. Antes de tocar ningún archivo, el programa comprueba sus dependencias (las versiones de Python, pikepdf y Ghostscript, el perfil ICC y, si se pide, veraPDF) y, si falta algo, dice qué falta y cómo conseguirlo. El código de salida (0, 1 o 2) permite usarlo dentro de otros scripts.
 
+## Implementación
+
+Está escrito en Python 3.14 o superior. Aparte de la biblioteca estándar solo usa pikepdf, que se apoya en qpdf; la conversión la hace Ghostscript, y la validación de los PDF/A, veraPDF, dos programas externos que el script ejecuta con `subprocess`. Es un solo archivo de unas 800 líneas, con clases de datos inmutables (`dataclass`) para las normas, los perfiles ICC y lo que se sabe de la entrada, y `argparse` para la línea de órdenes. Declara su dependencia en la cabecera, en el formato de PEP 723, y por eso `uv run` puede instalar pikepdf por su cuenta.
+
+Ghostscript se ejecuta en modo seguro (`-dSAFER`), con permiso solo para leer el perfil ICC (`--permit-file-read`), y trabaja sobre una copia de la entrada en una carpeta temporal que se borra al terminar. El archivo final solo se escribe si la conversión salió bien, y nunca sobre la entrada. El archivo PostScript que adjunta la intención de salida se escribe en esa misma carpeta para cada conversión, con la ruta del perfil y su número de componentes de color. Para el perfil ICC no hace falta ninguna biblioteca: el programa lee su cabecera (el espacio de color y la etiqueta `desc`, tanto en su forma v2 como en la v4) para saber si es RGB o CMYK y cómo se llama. Las advertencias de pikepdf sobre rarezas de la entrada se silencian, porque no son asunto del usuario; las que importan las da el programa mismo, por cada archivo y antes de su línea de resultado.
+
+### Proceso y distribución
+
+El trabajo pasó por cinco etapas: primero un conversor solo a PDF/A, `py-pdfa`, con veraPDF como juez; luego PDF/X-4, con su revisión estructural; el cambio de nombre a `py-pdfconform`, cuando el programa ya hacía dos normas; la corrección de lo que Ghostscript deja mal, que salió a la luz al comprobar lo que iba a afirmar el README, y por último la versión 1.0, con la comprobación de las dependencias, una revisión más a fondo de PDF/X-4 y las herramientas de publicación.
+
+El código se gestiona con git, en un solo repositorio publicado en GitHub (https://github.com/nivaca/py-pdfconform) y en Codeberg (https://codeberg.org/nivaca/py-pdfconform); un mismo `git push` sube a los dos. Dos herramientas de `tools/`, versiones reducidas de las de py-words, hacen las versiones publicadas. `bundle-zip.py` arma el ZIP de la distribución (`py-pdfconform-v.1.0.zip`), con el script, la licencia y los documentos en una carpeta del mismo nombre, y un archivo `COMMIT` con el commit del que se hizo. `release.py` hace el ZIP, etiqueta el commit, sube la etiqueta y crea la versión en las dos forjas con el ZIP adjunto; antes muestra las órdenes y pregunta, y se detiene si la etiqueta ya está en otro commit. También activa las versiones en Codeberg si el repositorio las tiene desactivadas, que fue lo que hizo fallar el primer intento de publicar la 1.0. La versión 1.0 se publicó el 16 de noviembre de 2026.
+
 ## Validación
 
 Los PDF/A se validan con veraPDF, el validador de referencia de la PDF Association, si está instalado; con `--validate`, su ausencia es un error. veraPDF no valida PDF/X, y no hay un validador libre que lo haga, así que escribí una revisión estructural para PDF/X-4: la versión de PDF/X en los metadatos, el título, las fechas e identificadores, `Trapped`, la intención de salida y su perfil, las cajas de cada página y las anotaciones. No es una verificación previa completa, que necesita Acrobat Pro o callas pdfToolbox, y el README lo dice.
@@ -24,9 +36,11 @@ Más tarde revisé los PDF/X-4 con más cuidado. Un análisis aparte buscó colo
 
 Fueron estas pruebas, y no la lectura de la documentación, las que encontraron los problemas de Ghostscript descritos arriba. La documentación de Ghostscript se contradice incluso sobre si admite PDF/X-4: un párrafo dice que `-dPDFX` acepta 1, 3 o 4, y una advertencia poco más abajo dice que solo se admiten PDF/X-1 y PDF/X-3. En la práctica, Ghostscript 10.07 produce PDF/X-4 correcto.
 
+`release.py` se probó con `--dry-run`, que solo muestra su plan: en el repositorio tal como quedó después de la 1.0 (reemplazaría el ZIP de las versiones ya publicadas) y en una copia con un commit nuevo, primero con la misma versión (se detiene) y luego con la versión 1.1 (etiquetaría, subiría y crearía las dos versiones). Las comprobaciones de dependencias se probaron una por una en entornos simulados: sin pikepdf, con Python 3.9, sin Ghostscript, con un Ghostscript 9.56 falso y con una ruta equivocada a veraPDF.
+
 ## Plataforma
 
-Está pensado para Linux, macOS y Windows: en Windows busca la orden `gswin64c`, y en los tres sistemas busca los perfiles ICC en las carpetas habituales de Ghostscript. Solo se ha probado en Linux. Necesita Python 3.10 o superior, Ghostscript 10 o superior y la biblioteca pikepdf; veraPDF es opcional. Es un programa de línea de órdenes, sin interfaz gráfica, y no necesita internet.
+Está pensado para Linux, macOS y Windows: en Windows busca la orden `gswin64c`, y en los tres sistemas busca los perfiles ICC en las carpetas habituales de Ghostscript. Solo se ha probado en Linux. Necesita Python 3.14 o superior, Ghostscript 10 o superior y la biblioteca pikepdf (8 o superior); veraPDF es opcional. Es un programa de línea de órdenes, sin interfaz gráfica, y no necesita internet.
 
 ## Ambiente
 

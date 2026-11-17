@@ -24,7 +24,7 @@ Instalación
 
 ### Qué se necesita
 
-- Python 3.10 o superior.
+- Python 3.14 o superior.
 - Ghostscript 10 o superior (la orden `gs`; `gswin64c` en Windows).
 - pikepdf, la biblioteca de Python.
 - veraPDF (<https://verapdf.org/software/>), solo para validar los PDF/A.
@@ -49,7 +49,9 @@ Se copia `py-pdfconform.py` en cualquier carpeta y se ejecuta con `python3
 py-pdfconform.py`.  No hay que instalar nada más.  Con
 [uv](https://docs.astral.sh/uv/), el script declara su propia
 dependencia, así que `uv run py-pdfconform.py ...` funciona sin instalar
-antes pikepdf (Ghostscript sigue haciendo falta).
+antes pikepdf (Ghostscript sigue haciendo falta).  uv también descarga por
+su cuenta Python 3.14 cuando el del sistema es más antiguo, como en
+Debian 13; allí, `uv run` es la manera más sencilla de usar el programa.
 
 Uso
 ---
@@ -82,7 +84,7 @@ conversión; las advertencias van antes.
 | `--version` | Muestra la versión del programa. |
 
 Antes de tocar ningún archivo, el programa comprueba lo que necesita:
-Python 3.10 o superior, pikepdf 8 o superior, Ghostscript 10 o superior,
+Python 3.14 o superior, pikepdf 8 o superior, Ghostscript 10 o superior,
 un perfil ICC utilizable y veraPDF cuando `--validate` o `--verapdf` lo
 piden.  Si falta algo, dice qué falta y cómo conseguirlo.
 

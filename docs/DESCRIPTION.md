@@ -6,7 +6,7 @@ to PDF/X-4, for printing.  Nicolas Vaughan made it in 2026.  It does not
 convert anything by itself: Ghostscript does the conversion, and the
 program prepares the input, corrects what Ghostscript leaves wrong and
 checks the result.  It is free software, under the GNU General Public
-License, version 3 or later.  Here I explain how it was made, in four
+License, version 3 or later.  Here I explain how it was made, in five
 stages.
 
 Nicolas Vaughan is Associate Professor of Literature at the School of Arts
@@ -101,6 +101,34 @@ a non-standard entry of the catalog, `/A`, where veraPDF does not look: the
 file passed, with the script still inside.  Now the program removes
 JavaScript from the catalog, the pages and the annotations, and says so.
 
+5. Version 1.0
+--------------
+
+Before calling it 1.0 I looked at what happens when something is
+missing.  The program already stopped with a message when there was no
+Ghostscript or no ICC profile, but without pikepdf Python only printed a
+traceback, and nothing checked the versions.  Now, before it touches any
+file, it checks Python (3.14 or later), pikepdf (8 or later), Ghostscript
+(10 or later, as `gs --version` says), the ICC profile and, when it is
+asked for, veraPDF.  If something is missing, it says what and how to get
+it, and ends with the exit code 2.  I tried each case in a faked
+environment: no pikepdf, Python 3.9, no Ghostscript, a false Ghostscript
+9.56, a wrong path to veraPDF.
+
+The version is a constant, `VERSION`, at the top of the script, and
+`--version` shows it.  Two tools in `tools/`, smaller copies of those of
+py-words, make the releases.  `bundle-zip.py` makes the ZIP of the
+distribution, `py-pdfconform-v.1.0.zip`, with the script, the licence and
+the documents in a folder of the same name, and a file `COMMIT` with the
+commit it was made from.  `release.py` makes the ZIP, tags the commit,
+pushes the tag, and makes the release with the ZIP on GitHub and on
+Codeberg; it shows the commands before running them, and stops if the tag
+is already on another commit.  The first release on Codeberg failed with a
+message that explained nothing ("The target couldn't be found"): the
+repository had releases switched off.  `release.py` now looks at this
+setting and switches them on if needed.  Version 1.0 was published on both
+forges on 16 November 2026.
+
 Testing
 -------
 
@@ -130,5 +158,11 @@ and the same CMYK profile, and Ghostscript's results agree within a few
 units.  The scan did find that the attached file was kept.  Whether
 PDF/X-4 allows attachments could not be confirmed from public sources, so
 the program now removes them in PDF/X-4 too, with a warning, and the
-structural check rejects a PDF/X-4 file that has one.  The program has one
-file of around 800 lines.
+structural check rejects a PDF/X-4 file that has one.
+
+The program is one file of around 800 lines; the two tools in `tools/`
+add around 400 more.  `release.py` was tried with `--dry-run`, which only
+shows its plan: on the repository as it was after 1.0 (it would replace
+the ZIP of the existing releases), and in a copy of it with a new commit,
+first with the same version (it stops) and then with version 1.1 (it
+would tag, push and make both releases).

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.14"
 # dependencies = ["pikepdf>=8"]
 # ///
 # py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
@@ -54,7 +54,7 @@ from pathlib import Path
 
 VERSION = "1.0"
 
-MIN_PYTHON = (3, 10)
+MIN_PYTHON = (3, 14)
 MIN_PIKEPDF = 8
 MIN_GHOSTSCRIPT = (10, 0)
 
@@ -712,6 +712,56 @@ def convert(src: Path, dst: Path, target: Target, *, icc: IccProfile, gs: str,
     return warnings
 
 
+@dataclass
+class Outcome:
+    """What happened to one file: status is "OK", "BAD" (converted, but the
+    check failed) or "FAIL" (not converted)."""
+    status: str
+    check: str = ""                 # e.g. "veraPDF: PASS"
+    warnings: list[str] = None
+    details: list[str] = None       # the validator's report, the problems
+    error: str = ""                 # why it failed
+    skipped: bool = False           # (failed because it would overwrite)
+
+    def __post_init__(self):
+        self.warnings = self.warnings or []
+        self.details = self.details or []
+
+
+def output_path(src: Path, target: Target, outdir: Path | None = None,
+                suffix: str | None = None) -> Path:
+    """Where the output of SRC goes: next to it, or in OUTDIR, with the
+    target's suffix (_pdfa, _pdfx) unless SUFFIX says otherwise."""
+    suffix = target.suffix if suffix is None else suffix
+    return (outdir or src.parent) / f"{src.stem}{suffix}.pdf"
+
+
+def process(src: Path, dst: Path, target: Target, *, icc: IccProfile, gs: str,
+            verapdf: str | None = None, password: str = "",
+            condition: str = "Custom", verbose: bool = False) -> Outcome:
+    """Convert SRC to DST and check the result: with veraPDF (PDF/A, if
+    VERAPDF is given) or with check_pdfx4 (PDF/X-4)."""
+    if dst.resolve() == src.resolve():
+        return Outcome("FAIL", error="output would overwrite the input",
+                       skipped=True)
+    try:
+        warnings = convert(src, dst, target, icc=icc, gs=gs, password=password,
+                           condition=condition, verbose=verbose)
+    except (ConversionError, OSError) as exc:
+        return Outcome("FAIL", error=str(exc))
+    if target.family == "A" and verapdf:
+        passed, report = validate_pdfa(verapdf, dst, target)
+        return Outcome("OK" if passed else "BAD",
+                       "veraPDF: PASS" if passed else "veraPDF: FAIL", warnings,
+                       [report] if verbose or not passed else [])
+    if target.family == "X":
+        problems = check_pdfx4(dst)
+        return Outcome("BAD" if problems else "OK",
+                       "structural check: " + ("FAIL" if problems else "PASS"),
+                       warnings, [f"  {p}" for p in problems])
+    return Outcome("OK", "", warnings)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Convert PDF files to PDF/A or PDF/X-4 using Ghostscript and pikepdf.")
@@ -762,43 +812,24 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    suffix = args.suffix if args.suffix is not None else target.suffix
     failures = 0
     for src in args.inputs:
-        if args.output:
-            dst = args.output
-        else:
-            dst = (args.outdir or src.parent) / f"{src.stem}{suffix}.pdf"
-        if dst.resolve() == src.resolve():
-            print(f"skip {src}: output would overwrite the input", file=sys.stderr)
+        dst = args.output or output_path(src, target, args.outdir, args.suffix)
+        result = process(src, dst, target, icc=icc, gs=gs, verapdf=verapdf,
+                         password=args.password, condition=args.condition,
+                         verbose=args.verbose)
+        if result.status == "FAIL":
+            print(f"{'skip' if result.skipped else 'FAIL'} {src}: {result.error}",
+                  file=sys.stderr)
             failures += 1
             continue
-        try:
-            warnings = convert(src, dst, target, icc=icc, gs=gs,
-                               password=args.password, condition=args.condition,
-                               verbose=args.verbose)
-        except (ConversionError, OSError) as exc:
-            print(f"FAIL {src}: {exc}", file=sys.stderr)
-            failures += 1
-            continue
-        for w in warnings:
+        for w in result.warnings:
             print(f"warning: {src}: {w}", file=sys.stderr)
-
-        status = "OK  "
-        if target.family == "A" and verapdf:
-            passed, report = validate_pdfa(verapdf, dst, target)
-            if args.verbose or not passed:
-                print(report, file=sys.stderr)
-            status = "OK  (veraPDF: PASS)" if passed else "BAD (veraPDF: FAIL)"
-            failures += not passed
-        elif target.family == "X":
-            problems = check_pdfx4(dst)
-            for p in problems:
-                print(f"  {p}", file=sys.stderr)
-            status = ("OK  (structural check: PASS)" if not problems
-                      else "BAD (structural check: FAIL)")
-            failures += bool(problems)
-        print(f"{status} {src} -> {dst} [{target.name}]")
+        for line in result.details:
+            print(line, file=sys.stderr)
+        check = f"({result.check})" if result.check else ""
+        print(f"{result.status:<4}{check} {src} -> {dst} [{target.name}]")
+        failures += result.status != "OK"
 
     return 1 if failures else 0
 
