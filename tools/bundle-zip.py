@@ -2,8 +2,8 @@
 """Makes a zip of the program, to distribute it:
 python3 tools/bundle-zip.py [-o FOLDER]
 
-The zip is dist/py-pdfconform-v.VERSION.zip (the VERSION of
-py-pdfconform.py; dist is made in the program's folder if need be, and
+The zip is dist/pdf2iso-v.VERSION.zip (the VERSION of
+pdf2iso.py; dist is made in the program's folder if need be, and
 --output gives another folder), with the program in a folder of the same
 name.  It has the script, the licence and the documents, but no hidden
 files or folders (.git ...), none of what is made while the program runs
@@ -23,7 +23,7 @@ import zipfile
 
 #  The program's folder (this script is in its tools/)
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCRIPT = "py-pdfconform.py"
+SCRIPT = "pdf2iso.py"
 COMMIT_FILE = "COMMIT"
 
 #  Where the zip goes, unless --output says otherwise
@@ -31,14 +31,14 @@ DIST = os.path.join(ROOT, "dist")
 
 #  What is made while the program runs or is edited (as in .gitignore)
 LEFT_OUT = ("__pycache__", "*.pyc", "*.bak", "*.tmp", "*~",
-            "py-pdfconform-v*.zip")
+            "pdf2iso-v*.zip")
 #  What is in the program's folder but not part of it: the folder of the
 #  bundles and the tools that make them and the releases
 NOT_PART = ("dist", "tools")
 
 
 def version() -> str:
-    """VERSION of py-pdfconform.py, read from the file (importing it would
+    """VERSION of pdf2iso.py, read from the file (importing it would
     check for pikepdf and Ghostscript, which making a zip does not need)."""
     with open(os.path.join(ROOT, SCRIPT), encoding="utf-8") as f:
         m = re.search(r'^VERSION = "([^"]+)"', f.read(), re.MULTILINE)
@@ -48,8 +48,8 @@ def version() -> str:
 
 
 def name() -> str:
-    """The name of the zip, without .zip: py-pdfconform-v.1.0."""
-    return f"py-pdfconform-v.{version()}"
+    """The name of the zip, without .zip: pdf2iso-v.1.0."""
+    return f"pdf2iso-v.{version()}"
 
 
 def files() -> list[str]:

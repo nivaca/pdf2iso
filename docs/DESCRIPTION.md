@@ -1,7 +1,7 @@
-How py-pdfconform was made
-==========================
+How pdf2iso was made
+====================
 
-py-pdfconform converts PDF files to PDF/A, for long-term archiving, and
+pdf2iso converts PDF files to PDF/A, for long-term archiving, and
 to PDF/X-4, for printing.  Nicolas Vaughan made it in 2026.  It does not
 convert anything by itself: Ghostscript does the conversion, and the
 program prepares the input, corrects what Ghostscript leaves wrong and
@@ -73,7 +73,9 @@ became `py-pdfconform`, and the script `py-pdfconform.py`, which describes
 what it does (making a PDF conform to a standard) and would still fit if
 other standards were added.  The option `-l` (level) became `-t`
 (target), which accepts `a-2b`, `x-4` and other spellings such as
-`PDF/A-2b`.
+`PDF/A-2b`.  In version 2.0 the name changed once more, to `pdf2iso`, with
+the script `pdf2iso.py`: shorter, and it says what the program makes, a
+PDF that follows an ISO standard.
 
 4. What Ghostscript leaves behind
 ---------------------------------
@@ -137,7 +139,9 @@ the command `py-pdfconform` as a symbolic link to the script in `~/bin`,
 or in `~/.local/bin` when there is no `~/bin`.  Version 1.2.1 made the
 installer warn when veraPDF is not installed, and moved that second
 place to `~/.local/share/bin` by mistake; version 1.2.2 put it back in
-`~/.local/bin`, the folder that is usually on the PATH.
+`~/.local/bin`, the folder that is usually on the PATH.  Version 2.0 is
+the new name, `pdf2iso`: the script, the command, the ZIP and the two
+repositories took it; the conversion did not change.
 
 Testing
 -------

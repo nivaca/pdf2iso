@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Publishes a release of py-pdfconform on GitHub (with gh) and on
-Codeberg (with tea): the tag vVERSION (the VERSION of py-pdfconform.py),
+"""Publishes a release of pdf2iso on GitHub (with gh) and on
+Codeberg (with tea): the tag vVERSION (the VERSION of pdf2iso.py),
 with the zip attached.
 
     python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
@@ -155,7 +155,7 @@ class Release:
         elif tagged and not self.args.redo:
             sys.exit(f"release.py: {TAG} is already the tag of "
                      f"{tagged[:7]}, not of HEAD ({head[:7]}); raise VERSION "
-                     f"in py-pdfconform.py for a new release, or --redo "
+                     f"in pdf2iso.py for a new release, or --redo "
                      "moves the tag (and replaces the zip of the releases)")
         else:
             self.plan("Move the tag to HEAD" if tagged else "Tag HEAD",

@@ -3,7 +3,7 @@
 # requires-python = ">=3.14"
 # dependencies = ["pikepdf>=8"]
 # ///
-# py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
+# pdf2iso: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
 # SPDX-License-Identifier: GPL-3.0-or-later (see LICENCE.txt)
 """Convert PDF files to PDF/A (archiving) or PDF/X-4 (printing).
 
@@ -25,17 +25,17 @@ in sync, as both standards require).
 Validation: PDF/A output is checked with veraPDF (https://verapdf.org) when
 it is on the PATH or given with --verapdf. veraPDF does not cover PDF/X, so
 PDF/X-4 output gets a built-in structural check instead; it is not a full
-preflight, which needs Acrobat Pro or callas pdfToolbox.
+preflight, which needs a commercial tool such as callas pdfToolbox.
 
 Requirements: Ghostscript >= 10 (``gs``) and pikepdf.
 
 Examples:
-    py-pdfconform.py report.pdf                     # -> report_pdfa.pdf (PDF/A-2b)
-    py-pdfconform.py report.pdf -t a-1b -o archived.pdf
-    py-pdfconform.py *.pdf -d out/ --validate
-    py-pdfconform.py flyer.pdf -t x-4               # -> flyer_pdfx.pdf
-    py-pdfconform.py flyer.pdf -t x-4 --icc ISOcoated_v2_eci.icc --condition FOGRA39
-    py-pdfconform.py locked.pdf --password secret
+    pdf2iso.py report.pdf                     # -> report_pdfa.pdf (PDF/A-2b)
+    pdf2iso.py report.pdf -t a-1b -o archived.pdf
+    pdf2iso.py *.pdf -d out/ --validate
+    pdf2iso.py flyer.pdf -t x-4               # -> flyer_pdfx.pdf
+    pdf2iso.py flyer.pdf -t x-4 --icc ISOcoated_v2_eci.icc --condition FOGRA39
+    pdf2iso.py locked.pdf --password secret
 """
 
 from __future__ import annotations
@@ -52,14 +52,14 @@ import warnings as warnings_module
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.2.2"
+VERSION = "2.0"
 
 MIN_PYTHON = (3, 14)
 MIN_PIKEPDF = 8
 MIN_GHOSTSCRIPT = (10, 0)
 
 if sys.version_info < MIN_PYTHON:
-    sys.stderr.write("error: py-pdfconform.py needs Python %d.%d or later; this is %d.%d\n"
+    sys.stderr.write("error: pdf2iso.py needs Python %d.%d or later; this is %d.%d\n"
                      % (MIN_PYTHON + sys.version_info[:2]))
     sys.exit(2)
 
@@ -70,7 +70,7 @@ except ImportError:
         "error: the Python library pikepdf is missing. Install it with your\n"
         "system's package manager (python3-pikepdf on Fedora, Debian and\n"
         "Ubuntu) or with 'pip install pikepdf', or run the script with\n"
-        "'uv run py-pdfconform.py', which installs it by itself.\n")
+        "'uv run pdf2iso.py', which installs it by itself.\n")
     sys.exit(2)
 if int(pikepdf.__version__.split(".")[0]) < MIN_PIKEPDF:
     sys.stderr.write(f"error: pikepdf {MIN_PIKEPDF} or later is needed; "
@@ -697,7 +697,7 @@ def convert(src: Path, dst: Path, target: Target, *, icc: IccProfile, gs: str,
             verbose: bool = False) -> list[str]:
     """Convert src to the target standard at dst; return any warnings."""
     title = src.stem
-    with tempfile.TemporaryDirectory(prefix="pdfconform-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdf2iso-") as tmp:
         work = Path(tmp)
         clean = work / "input.pdf"
         gs_out = work / "gs.pdf"
@@ -791,7 +791,7 @@ def main(argv: list[str] | None = None) -> int:
                          "(PDF/X-4 output is always given a built-in structural check)")
     ap.add_argument("--verapdf", help="path to the veraPDF command-line tool")
     ap.add_argument("--version", action="version",
-                    version=f"py-pdfconform {VERSION}")
+                    version=f"pdf2iso {VERSION}")
     ap.add_argument("-v", "--verbose", action="store_true",
                     help="show Ghostscript and validator output")
     args = ap.parse_args(argv)

@@ -1,11 +1,11 @@
-py-pdfconform
+pdf2iso
 =============
 
 *(English: [README.md](README.md))*
 
-py-pdfconform convierte archivos PDF a dos normas ISO: PDF/A, para el
+pdf2iso convierte archivos PDF a dos normas ISO: PDF/A, para el
 archivo a largo plazo (PDF/A-1b, PDF/A-2b y PDF/A-3b), y PDF/X-4, para la
-impresión.  Es un solo script de Python, `py-pdfconform.py`.  La conversión
+impresión.  Es un solo script de Python, `pdf2iso.py`.  La conversión
 la hace Ghostscript; pikepdf abre antes los archivos cifrados o dañados y
 corrige después los metadatos.  Luego se comprueba cada resultado: los
 PDF/A con veraPDF, si está instalado, y los PDF/X-4 con una revisión
@@ -13,7 +13,8 @@ estructural propia.  Es software libre, bajo la Licencia Pública General
 de GNU (véase "Licencia").
 
 Lo escribí yo, Nicolas Vaughan (<nicolasvaughan@proton.me>), en 2026.  Empezó como `py-pdfa`, un
-conversor a PDF/A, y tomó su nombre actual cuando se le añadió PDF/X-4.
+conversor a PDF/A; al añadírsele PDF/X-4 pasó a llamarse `py-pdfconform`,
+y en la versión 2.0 tomó su nombre actual, `pdf2iso`.
 
 [Nicolas Vaughan](https://artehum.uniandes.edu.co/profesores/nicolas-vaughan/)
 es profesor asociado de Literatura de la Facultad de Artes y Humanidades
@@ -45,28 +46,28 @@ En macOS, con Homebrew:
 
 ### Obtener el programa
 
-Se copia `py-pdfconform.py` en cualquier carpeta y se ejecuta con `python3
-py-pdfconform.py`.  No hay que instalar nada más.  Con
+Se copia `pdf2iso.py` en cualquier carpeta y se ejecuta con `python3
+pdf2iso.py`.  No hay que instalar nada más.  Con
 [uv](https://docs.astral.sh/uv/), el script declara su propia
-dependencia, así que `uv run py-pdfconform.py ...` funciona sin instalar
+dependencia, así que `uv run pdf2iso.py ...` funciona sin instalar
 antes pikepdf (Ghostscript sigue haciendo falta).  uv también descarga por
 su cuenta Python 3.14 cuando el del sistema es más antiguo, como en
 Debian 13; allí, `uv run` es la manera más sencilla de usar el programa.
 
 ### Una orden (Linux)
 
-Para ejecutarlo como `py-pdfconform` desde cualquier carpeta, se
+Para ejecutarlo como `pdf2iso` desde cualquier carpeta, se
 descomprime el programa donde vaya a quedarse y se ejecuta
 
     $ ./install.sh
 
-Esto crea un enlace simbólico a `py-pdfconform.py`, llamado
-`py-pdfconform`, en `~/bin` si esa carpeta existe, o si no en
+Esto crea un enlace simbólico a `pdf2iso.py`, llamado
+`pdf2iso`, en `~/bin` si esa carpeta existe, o si no en
 `~/.local/bin` (que se crea si hace falta).  No copia nada ni necesita
 permisos de administrador, así que la carpeta del programa debe quedarse
 donde está; si se mueve, hay que volver a ejecutar `./install.sh`.  El
 instalador avisa si la carpeta del enlace no está en el PATH, y dice cómo
-añadirla, y al final ejecuta `py-pdfconform --version` para comprobar que
+añadirla, y al final ejecuta `pdf2iso --version` para comprobar que
 estén Python y pikepdf.  También avisa si veraPDF no está instalado: el
 programa funciona sin él, pero entonces no puede validar los PDF/A.  Ejecutarlo otra vez no hace daño: deja un enlace
 que ya es correcto y reemplaza uno que apunte a otra copia (una versión
@@ -76,12 +77,12 @@ anterior, por ejemplo), pero nunca un archivo que no sea un enlace.
 Uso
 ---
 
-    python3 py-pdfconform.py informe.pdf                 # informe_pdfa.pdf, PDF/A-2b
-    python3 py-pdfconform.py informe.pdf -t a-1b -o archivado.pdf
-    python3 py-pdfconform.py *.pdf -d convertidos/ --validate
-    python3 py-pdfconform.py cerrado.pdf -p secreto      # archivo cifrado
-    python3 py-pdfconform.py volante.pdf -t x-4          # volante_pdfx.pdf, PDF/X-4
-    python3 py-pdfconform.py volante.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
+    python3 pdf2iso.py informe.pdf                 # informe_pdfa.pdf, PDF/A-2b
+    python3 pdf2iso.py informe.pdf -t a-1b -o archivado.pdf
+    python3 pdf2iso.py *.pdf -d convertidos/ --validate
+    python3 pdf2iso.py cerrado.pdf -p secreto      # archivo cifrado
+    python3 pdf2iso.py volante.pdf -t x-4          # volante_pdfx.pdf, PDF/X-4
+    python3 pdf2iso.py volante.pdf -t x-4 --icc PSOcoated_v3.icc --condition FOGRA51
 
 El archivo de salida queda junto al de entrada, con `_pdfa` o `_pdfx`
 añadido al nombre, salvo que `-o` o `-d` digan otra cosa.  El programa
@@ -211,7 +212,7 @@ responde: la versión de PDF/X en los metadatos XMP, el título, las fechas
 e identificadores, `Trapped`, la intención de salida y su perfil, el
 TrimBox y el BleedBox de cada página y las anotaciones.  No revisa cómo se
 usa cada color y cada fuente dentro de las páginas.  Una verificación
-previa completa de PDF/X necesita Adobe Acrobat Pro o callas pdfToolbox, y
+previa completa de PDF/X necesita una herramienta comercial como callas pdfToolbox, y
 antes de un trabajo de imprenta importante es prudente que la imprenta
 revise un archivo.
 
@@ -235,8 +236,8 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/py-pdfconform-v.1.2.2.zip` (con la `VERSION` de
-`py-pdfconform.py`; `-o` da otra carpeta), con el programa dentro de una
+Escribe `dist/pdf2iso-v.2.0.zip` (con la `VERSION` de
+`pdf2iso.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No
 contiene archivos ocultos (`.git`...), ni lo que se genera al ejecutar o
@@ -254,18 +255,18 @@ el ZIP y reemplaza el que tenga el mismo nombre.  Si el repositorio de
 Codeberg tiene las versiones desactivadas, primero las activa.  Muestra
 las órdenes y pregunta antes de ejecutarlas; `--dry-run` solo las
 muestra.  Para una versión nueva hay que subir antes `VERSION` en
-`py-pdfconform.py`: si la etiqueta está en otro commit, el script se
+`pdf2iso.py`: si la etiqueta está en otro commit, el script se
 detiene, salvo que `--redo` la mueva, lo que rehace una versión.
 
 Licencia
 --------
 
-py-pdfconform se distribuye bajo la Licencia Pública General de GNU (GPL),
+pdf2iso se distribuye bajo la Licencia Pública General de GNU (GPL),
 versión 3 o (a su elección) cualquier versión posterior (véase
 [LICENCE.txt](LICENCE.txt)): cualquiera puede usarlo, copiarlo,
 modificarlo y redistribuirlo, también con fines comerciales, pero un
 programa modificado o mayor que lo incluya debe distribuirse bajo la
 misma licencia, con su código fuente.  El aviso de copyright reconoce a
 Nicolas Vaughan (<nicolasvaughan@proton.me>, 2026).  Ghostscript, pikepdf y veraPDF son
-programas aparte, con sus propias licencias; py-pdfconform los ejecuta o
+programas aparte, con sus propias licencias; pdf2iso los ejecuta o
 los importa, pero no los incluye.

@@ -1,4 +1,4 @@
-py-pdfconform, a converter of PDF files to PDF/A and PDF/X-4
+pdf2iso, a converter of PDF files to PDF/A and PDF/X-4
 
 Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
 

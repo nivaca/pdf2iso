@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Installs py-pdfconform as a command for this user (Linux):
+# Installs pdf2iso as a command for this user (Linux):
 #
-#     ./install.sh               link ~/bin/py-pdfconform (or ~/.local/bin/...)
+#     ./install.sh               link ~/bin/pdf2iso (or ~/.local/bin/...)
 #     ./install.sh --uninstall   remove that link
 #
-# The command is a symbolic link to py-pdfconform.py in this folder, so
+# The command is a symbolic link to pdf2iso.py in this folder, so
 # the folder must stay where it is; after moving it, run ./install.sh
 # again.  The link goes in ~/bin if that folder exists, and otherwise in
 # ~/.local/bin (made if need be).  Nothing is copied, and nothing needs
 # root.
 #
-# py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
+# pdf2iso: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
 # SPDX-License-Identifier: GPL-3.0-or-later (see LICENCE.txt)
 
 set -euo pipefail
 
-NAME=py-pdfconform
+NAME=pdf2iso
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 SCRIPT="$HERE/$NAME.py"
 
