@@ -215,7 +215,7 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `dist/py-pdfconform-v.1.0.zip` (with the `VERSION` of
+It writes `dist/py-pdfconform-v.1.1.zip` (with the `VERSION` of
 `py-pdfconform.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does

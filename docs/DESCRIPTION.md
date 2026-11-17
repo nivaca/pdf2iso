@@ -108,7 +108,7 @@ Before calling it 1.0 I looked at what happens when something is
 missing.  The program already stopped with a message when there was no
 Ghostscript or no ICC profile, but without pikepdf Python only printed a
 traceback, and nothing checked the versions.  Now, before it touches any
-file, it checks Python (3.14 or later), pikepdf (8 or later), Ghostscript
+file, it checks Python (then 3.10 or later), pikepdf (8 or later), Ghostscript
 (10 or later, as `gs --version` says), the ICC profile and, when it is
 asked for, veraPDF.  If something is missing, it says what and how to get
 it, and ends with the exit code 2.  I tried each case in a faked
@@ -128,6 +128,11 @@ message that explained nothing ("The target couldn't be found"): the
 repository had releases switched off.  `release.py` now looks at this
 setting and switches them on if needed.  Version 1.0 was published on both
 forges on 16 November 2026.
+
+Version 1.1 raised the minimum to Python 3.14, as in my other programs,
+and gathered what is done with each file (converting it and checking the
+result) into one function, `process()`.  The conversion itself did not
+change.
 
 Testing
 -------

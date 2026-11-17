@@ -215,7 +215,7 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/py-pdfconform-v.1.0.zip` (con la `VERSION` de
+Escribe `dist/py-pdfconform-v.1.1.zip` (con la `VERSION` de
 `py-pdfconform.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No

@@ -1,4 +1,4 @@
-# py-pdfconform 1.0: descripción
+# py-pdfconform 1.1: descripción
 
 ## Análisis
 
@@ -24,7 +24,7 @@ Ghostscript se ejecuta en modo seguro (`-dSAFER`), con permiso solo para leer el
 
 El trabajo pasó por cinco etapas: primero un conversor solo a PDF/A, `py-pdfa`, con veraPDF como juez; luego PDF/X-4, con su revisión estructural; el cambio de nombre a `py-pdfconform`, cuando el programa ya hacía dos normas; la corrección de lo que Ghostscript deja mal, que salió a la luz al comprobar lo que iba a afirmar el README, y por último la versión 1.0, con la comprobación de las dependencias, una revisión más a fondo de PDF/X-4 y las herramientas de publicación.
 
-El código se gestiona con git, en un solo repositorio publicado en GitHub (https://github.com/nivaca/py-pdfconform) y en Codeberg (https://codeberg.org/nivaca/py-pdfconform); un mismo `git push` sube a los dos. Dos herramientas de `tools/`, versiones reducidas de las de py-words, hacen las versiones publicadas. `bundle-zip.py` arma el ZIP de la distribución (`py-pdfconform-v.1.0.zip`), con el script, la licencia y los documentos en una carpeta del mismo nombre, y un archivo `COMMIT` con el commit del que se hizo. `release.py` hace el ZIP, etiqueta el commit, sube la etiqueta y crea la versión en las dos forjas con el ZIP adjunto; antes muestra las órdenes y pregunta, y se detiene si la etiqueta ya está en otro commit. También activa las versiones en Codeberg si el repositorio las tiene desactivadas, que fue lo que hizo fallar el primer intento de publicar la 1.0. La versión 1.0 se publicó el 16 de noviembre de 2026.
+El código se gestiona con git, en un solo repositorio publicado en GitHub (https://github.com/nivaca/py-pdfconform) y en Codeberg (https://codeberg.org/nivaca/py-pdfconform); un mismo `git push` sube a los dos. Dos herramientas de `tools/`, versiones reducidas de las de py-words, hacen las versiones publicadas. `bundle-zip.py` arma el ZIP de la distribución (`py-pdfconform-v.1.0.zip`), con el script, la licencia y los documentos en una carpeta del mismo nombre, y un archivo `COMMIT` con el commit del que se hizo. `release.py` hace el ZIP, etiqueta el commit, sube la etiqueta y crea la versión en las dos forjas con el ZIP adjunto; antes muestra las órdenes y pregunta, y se detiene si la etiqueta ya está en otro commit. También activa las versiones en Codeberg si el repositorio las tiene desactivadas, que fue lo que hizo fallar el primer intento de publicar la 1.0. La versión 1.0 se publicó el 16 de noviembre de 2026. La 1.1 exige Python 3.14, como los demás programas del autor, y reúne en una sola función, `process()`, lo que se hace con cada archivo (convertirlo y comprobar el resultado); la conversión misma no cambió.
 
 ## Validación
 
