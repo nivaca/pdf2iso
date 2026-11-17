@@ -134,7 +134,9 @@ and gathered what is done with each file (converting it and checking the
 result) into one function, `process()`.  The conversion itself did not
 change.  Version 1.2 added an installer for Linux, `install.sh`, which makes
 the command `py-pdfconform` as a symbolic link to the script in `~/bin`,
-or in `~/.local/bin` when there is no `~/bin`.
+or in `~/.local/bin` when there is no `~/bin`.  Version 1.2.1 moved that
+second place to `~/.local/share/bin`, and made the installer warn when
+veraPDF is not installed.
 
 Testing
 -------

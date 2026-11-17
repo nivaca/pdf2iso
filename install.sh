@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Installs py-pdfconform as a command for this user (Linux):
 #
-#     ./install.sh               link ~/bin/py-pdfconform (or ~/.local/bin/...)
+#     ./install.sh               link ~/bin/py-pdfconform (or ~/.local/share/bin/...)
 #     ./install.sh --uninstall   remove that link
 #
 # The command is a symbolic link to py-pdfconform.py in this folder, so
 # the folder must stay where it is; after moving it, run ./install.sh
 # again.  The link goes in ~/bin if that folder exists, and otherwise in
-# ~/.local/bin (made if need be).  Nothing is copied, and nothing needs
+# ~/.local/share/bin (made if need be).  Nothing is copied, and nothing needs
 # root.
 #
 # py-pdfconform: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
@@ -31,7 +31,7 @@ die() {
 if [[ -d "$HOME/bin" ]]; then
     BIN="$HOME/bin"
 else
-    BIN="$HOME/.local/bin"
+    BIN="$HOME/.local/share/bin"
 fi
 LINK="$BIN/$NAME"
 
@@ -80,6 +80,15 @@ install() {
             echo "uv is installed: 'uv run $SCRIPT' works with a Python of its own."
         fi
         exit 1
+    fi
+
+    #  veraPDF is optional, but without it PDF/A results are not validated
+    if ! command -v verapdf >/dev/null 2>&1 && [[ ! -x "$BIN/verapdf" ]]; then
+        echo
+        echo "Warning: veraPDF was not found, so $NAME will convert to PDF/A"
+        echo "without validating the result (and --validate will refuse to run)."
+        echo "Install it from https://verapdf.org/software/ and put the verapdf"
+        echo "command in your PATH, or give its path with --verapdf."
     fi
 }
 

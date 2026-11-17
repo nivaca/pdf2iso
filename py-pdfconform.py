@@ -52,7 +52,7 @@ import warnings as warnings_module
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.2"
+VERSION = "1.2.1"
 
 MIN_PYTHON = (3, 14)
 MIN_PIKEPDF = 8
