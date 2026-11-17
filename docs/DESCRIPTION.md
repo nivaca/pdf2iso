@@ -132,7 +132,9 @@ forges on 16 November 2026.
 Version 1.1 raised the minimum to Python 3.14, as in my other programs,
 and gathered what is done with each file (converting it and checking the
 result) into one function, `process()`.  The conversion itself did not
-change.
+change.  Version 1.2 added an installer for Linux, `install.sh`, which makes
+the command `py-pdfconform` as a symbolic link to the script in `~/bin`,
+or in `~/.local/bin` when there is no `~/bin`.
 
 Testing
 -------

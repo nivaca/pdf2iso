@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import zipfile
 
 #  The program's folder (this script is in its tools/)
@@ -90,7 +91,11 @@ def bundle(folder: str) -> str:
             z.write(os.path.join(ROOT, f), name() + "/" + f.replace(os.sep, "/"))
         commit = built_from()
         if commit:
-            z.writestr(name() + "/" + COMMIT_FILE, commit + "\n")
+            info = zipfile.ZipInfo(name() + "/" + COMMIT_FILE,
+                                   time.localtime()[:6])
+            info.external_attr = 0o100644 << 16     # (writestr gives 0o600)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(info, commit + "\n")
     os.replace(tmp, path)
     return path
 

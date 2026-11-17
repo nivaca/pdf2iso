@@ -53,6 +53,25 @@ antes pikepdf (Ghostscript sigue haciendo falta).  uv también descarga por
 su cuenta Python 3.14 cuando el del sistema es más antiguo, como en
 Debian 13; allí, `uv run` es la manera más sencilla de usar el programa.
 
+### Una orden (Linux)
+
+Para ejecutarlo como `py-pdfconform` desde cualquier carpeta, se
+descomprime el programa donde vaya a quedarse y se ejecuta
+
+    $ ./install.sh
+
+Esto crea un enlace simbólico a `py-pdfconform.py`, llamado
+`py-pdfconform`, en `~/bin` si esa carpeta existe, o si no en
+`~/.local/bin` (que se crea si hace falta).  No copia nada ni necesita
+permisos de administrador, así que la carpeta del programa debe quedarse
+donde está; si se mueve, hay que volver a ejecutar `./install.sh`.  El
+instalador avisa si la carpeta del enlace no está en el PATH, y dice cómo
+añadirla, y al final ejecuta `py-pdfconform --version` para comprobar que
+estén Python y pikepdf.  Ejecutarlo otra vez no hace daño: deja un enlace
+que ya es correcto y reemplaza uno que apunte a otra copia (una versión
+anterior, por ejemplo), pero nunca un archivo que no sea un enlace.
+`./install.sh --uninstall` quita el enlace, si apunta a esta copia.
+
 Uso
 ---
 
@@ -215,7 +234,7 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/py-pdfconform-v.1.1.zip` (con la `VERSION` de
+Escribe `dist/py-pdfconform-v.1.2.zip` (con la `VERSION` de
 `py-pdfconform.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No
