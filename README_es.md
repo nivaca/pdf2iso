@@ -99,6 +99,7 @@ conversión; las advertencias van antes.
 | `--suffix` | Lo que se añade a los nombres de salida, en lugar de `_pdfa` o `_pdfx`. |
 | `--icc` | El perfil ICC de la intención de salida: un perfil sRGB para PDF/A, el perfil CMYK de la imprenta para PDF/X-4.  Por omisión, los perfiles del propio Ghostscript. |
 | `--condition` | Solo PDF/X-4: el nombre registrado de la condición de impresión que describe el perfil de `--icc`, como `FOGRA39`.  Por omisión, `Custom`. |
+| `--light` | Solo PDF/A-2b y 3b: probar primero una conversión ligera que deja las páginas como están, sin Ghostscript, y quedarse con ella si veraPDF la aprueba; si no, convertir con Ghostscript. Necesita veraPDF (véase "Escaneos que crecen"). |
 | `--validate` | Solo PDF/A: termina con un error si no encuentra veraPDF, en lugar de convertir sin validar. |
 | `--verapdf` | La ruta de la orden de veraPDF, si no está en el PATH. |
 | `-v`, `--verbose` | Muestra los mensajes de Ghostscript y de veraPDF. |
@@ -171,6 +172,31 @@ Las cajas de página se ajustan al tamaño de la página, sin sangrado.  Es
 lo correcto para documentos que no imprimen hasta el borde del papel; un
 diseño con sangrado tiene que prepararse así en el programa que lo hizo.
 
+Escaneos que crecen
+-------------------
+
+Ghostscript escribe de nuevo cada página, y algunos tipos de imagen no los
+puede escribir tal como llegaron.  Los escaneos son el caso habitual: JBIG2,
+el formato compacto de muchos escaneos en blanco y negro, sale varias veces
+más grande, y las páginas en capas de los escaneos del Internet Archive
+(una máscara JBIG2 sobre imágenes pequeñas en JPEG 2000) se guardan otra
+vez a resolución completa.  Un libro de 587 páginas del Internet Archive,
+de 24 MB, pasó a 173 MB.
+
+Para esos archivos está `--light`, para PDF/A-2b y PDF/A-3b.  Primero
+intenta hacer el PDF/A solo con pikepdf, sin Ghostscript: añade los
+metadatos y la intención de salida, quita lo que la norma prohíbe (como en
+el paso 3, más abajo) y deja las páginas como están.  Luego veraPDF revisa
+el resultado.  Si lo aprueba, esa es la salida, y su línea dice `pages
+kept`; si no, el programa lo dice y convierte con Ghostscript como
+siempre.  El libro de arriba quedó en 24 MB, pasó veraPDF y tardó 4
+segundos en lugar de 72.  La vía ligera funciona cuando el archivo ya
+tiene lo que PDF/A pide de las páginas (fuentes incrustadas, salvo las del
+texto invisible, como la capa de OCR de un escaneo, y colores que la norma
+admita); un archivo con fuentes sin incrustar en su texto visible siempre
+necesita Ghostscript.  `--light` necesita veraPDF, porque sin él no hay
+manera de saber si el resultado ligero es válido.
+
 Cómo funciona
 -------------
 
@@ -236,7 +262,7 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/pdf2iso-v.2.0.zip` (con la `VERSION` de
+Escribe `dist/pdf2iso-v.2.1.zip` (con la `VERSION` de
 `pdf2iso.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No

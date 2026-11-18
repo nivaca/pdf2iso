@@ -99,6 +99,7 @@ warnings go before it.
 | `--suffix` | What is added to the output names, instead of `_pdfa` or `_pdfx`. |
 | `--icc` | The ICC profile of the output intent: an sRGB profile for PDF/A, the printer's CMYK profile for PDF/X-4.  By default, Ghostscript's own profiles. |
 | `--condition` | PDF/X-4 only: the registered name of the printing condition that the `--icc` profile describes, such as `FOGRA39`.  By default, `Custom`. |
+| `--light` | PDF/A-2b and 3b only: first try a light conversion that keeps the pages as they are, without Ghostscript, and keep it if veraPDF passes it; otherwise convert with Ghostscript. Needs veraPDF (see "Scans that grow"). |
 | `--validate` | PDF/A only: stop with an error if veraPDF is not found, instead of converting without validating. |
 | `--verapdf` | The path of the veraPDF command, if it is not on the PATH. |
 | `-v`, `--verbose` | Show the messages of Ghostscript and of veraPDF. |
@@ -172,6 +173,29 @@ correct for documents that do not print to the edge of the paper.  A
 design with bleed needs to be prepared with it in the program that made
 it.
 
+Scans that grow
+---------------
+
+Ghostscript writes every page again, and some kinds of images it cannot
+write back as they came.  Scans are the usual case: JBIG2, the compact
+format of many black-and-white scans, comes out several times larger, and
+the layered pages of the Internet Archive's scans (a JBIG2 mask over small
+JPEG 2000 images) are stored again at full resolution.  A book of 587 pages
+from the Internet Archive, 24 MB, became 173 MB.
+
+For such files there is `--light`, for PDF/A-2b and PDF/A-3b.  It first
+tries to make the PDF/A with pikepdf only, without Ghostscript: it adds the
+metadata and the output intent, removes what the standard forbids (as in
+step 3 below), and leaves the pages as they are.  Then veraPDF checks the
+result.  If it passes, that is the output, and its line says `pages kept`;
+if not, the program says so and converts with Ghostscript as usual.  The
+book above stayed at 24 MB, passed veraPDF, and took 4 seconds instead of
+72.  The light route works when the file already has what PDF/A asks of
+the pages (fonts embedded, except those of invisible text such as the OCR
+layer of a scan, and colours it allows); a file with fonts missing in its
+visible text always needs Ghostscript.  `--light` needs veraPDF, since
+without it there is no way to know whether the light result is valid.
+
 How it works
 ------------
 
@@ -236,7 +260,7 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `dist/pdf2iso-v.2.0.zip` (with the `VERSION` of
+It writes `dist/pdf2iso-v.2.1.zip` (with the `VERSION` of
 `pdf2iso.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does

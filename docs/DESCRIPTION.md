@@ -143,6 +143,19 @@ place to `~/.local/share/bin` by mistake; version 1.2.2 put it back in
 the new name, `pdf2iso`: the script, the command, the ZIP and the two
 repositories took it; the conversion did not change.
 
+Version 2.1 added `--light`.  A book of 587 pages scanned by the Internet
+Archive grew from 24 MB to 173 MB: its pages are layers, a JBIG2 mask over
+small JPEG 2000 images, and Ghostscript, which cannot write JBIG2, stored
+them again at full resolution.  The book needed little that Ghostscript
+does: its only font is that of the invisible OCR text, which PDF/A-2 and 3
+allow unembedded.  So `--light` tries first with pikepdf only, keeping the
+pages, and asks veraPDF.  The first try failed on a single rule: the
+images asked viewers to smooth them (`Interpolate`), which PDF/A forbids;
+the program now removes that key.  Then the book passed veraPDF as PDF/A-2b
+and 3b at 24 MB, in 4 seconds instead of 72, with the pages and the text
+identical to the original.  When veraPDF does not pass the light result,
+the file is converted with Ghostscript as before.
+
 Testing
 -------
 

@@ -36,6 +36,13 @@ Examples:
     pdf2iso.py flyer.pdf -t x-4               # -> flyer_pdfx.pdf
     pdf2iso.py flyer.pdf -t x-4 --icc ISOcoated_v2_eci.icc --condition FOGRA39
     pdf2iso.py locked.pdf --password secret
+    pdf2iso.py scan.pdf -t a-3b --light        # keep the pages if veraPDF allows
+
+--light (PDF/A-2b and 3b, with veraPDF) first tries a light conversion with
+pikepdf only, which keeps the pages as they are; scanned books whose images
+Ghostscript cannot write back in their own compression (JBIG2, layered JPEG
+2000) stay their size.  If veraPDF does not pass the result, the file is
+converted with Ghostscript as usual.
 """
 
 from __future__ import annotations
@@ -52,7 +59,7 @@ import warnings as warnings_module
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "2.0"
+VERSION = "2.1"
 
 MIN_PYTHON = (3, 14)
 MIN_PIKEPDF = 8
@@ -186,8 +193,10 @@ def find_ghostscript() -> str:
     return path
 
 
-def find_verapdf(explicit: str | None, required: bool) -> str | None:
-    """Find the veraPDF command; None if it is not there and not required."""
+def find_verapdf(explicit: str | None, required: bool,
+                 needed_by: str = "--validate") -> str | None:
+    """Find the veraPDF command; None if it is not there and not required
+    (NEEDED_BY, the option that requires it, goes into the message)."""
     if explicit:
         path = shutil.which(explicit)
         if path is None:
@@ -195,7 +204,7 @@ def find_verapdf(explicit: str | None, required: bool) -> str | None:
         return path
     path = shutil.which("verapdf")
     if path is None and required:
-        raise ConversionError("--validate given but veraPDF was not found; install it "
+        raise ConversionError(f"{needed_by} given but veraPDF was not found; install it "
                               "from https://verapdf.org/software/ or give its path "
                               "with --verapdf")
     return path
@@ -413,6 +422,22 @@ def remove_javascript(pdf: pikepdf.Pdf) -> int:
     return count
 
 
+def remove_interpolation(pdf: pikepdf.Pdf) -> int:
+    """PDF/A forbids Interpolate true in images (a hint to viewers to smooth
+    them when enlarged); Ghostscript drops it, the light route must too.
+    Returns how many images had it. (Inline images in content streams are
+    not touched: if they have it, veraPDF rejects the light result.)"""
+    count = 0
+    for obj in pdf.objects:
+        if (isinstance(obj, pikepdf.Stream)
+                and obj.get("/Subtype") == pikepdf.Name.Image
+                and "/Interpolate" in obj):
+            if bool(obj.Interpolate):
+                count += 1
+            del obj["/Interpolate"]
+    return count
+
+
 def fix_optional_content(pdf: pikepdf.Pdf) -> bool:
     """Layers: PDF/A and PDF/X want a Name in every optional content
     configuration and no AS (automatic state) entries. Returns True if
@@ -521,9 +546,25 @@ def run_ghostscript(gs: str, src: Path, dst: Path, target: Target,
         raise ConversionError(f"Ghostscript could not produce {target.name}:\n{messages}")
 
 
+def add_output_intent(pdf: pikepdf.Pdf, icc: IccProfile) -> None:
+    """Attach ICC as the PDF/A output intent (the light route, where
+    Ghostscript does not do it)."""
+    profile = pdf.make_stream(icc.path.read_bytes(), N=icc.components)
+    intent = pikepdf.Dictionary(
+        Type=pikepdf.Name.OutputIntent, S=pikepdf.Name.GTS_PDFA1,
+        DestOutputProfile=profile,
+        OutputCondition=pikepdf.String(icc.description),
+        OutputConditionIdentifier=pikepdf.String(icc.description),
+        Info=pikepdf.String(icc.description),
+        RegistryName=pikepdf.String("http://www.color.org"))
+    pdf.Root.OutputIntents = pikepdf.Array([pdf.make_indirect(intent)])
+
+
 def finalize(path: Path, dst: Path, target: Target, facts: SourceFacts,
-             title: str) -> list[str]:
+             title: str, intent: IccProfile | None = None) -> list[str]:
     """Restore lost metadata, sync XMP with DocInfo, check the markers.
+    INTENT, if given, is attached as the output intent when the file has
+    none (the light route).
 
     Returns a list of warnings."""
     warnings = []
@@ -556,6 +597,8 @@ def finalize(path: Path, dst: Path, target: Target, facts: SourceFacts,
         else:
             fix_attachments(pdf, facts.mime_types)
         fix_optional_content(pdf)
+        if target.family == "A":
+            remove_interpolation(pdf)
         if remove_javascript(pdf):
             warnings.append(f"JavaScript was removed: {target.name} does not allow it")
 
@@ -583,13 +626,20 @@ def finalize(path: Path, dst: Path, target: Target, facts: SourceFacts,
                 meta[f"{{{NS_PDFXID}}}GTS_PDFXVersion"] = "PDF/X-4"
                 meta[f"{{{NS_PDF}}}Trapped"] = str(pdf.docinfo["/Trapped"]).lstrip("/")
 
+        if intent is not None and "/OutputIntents" not in pdf.Root:
+            add_output_intent(pdf, intent)
         if "/OutputIntents" not in pdf.Root:
             raise ConversionError("output has no OutputIntent; ICC profile was not embedded")
 
         # PDF/A-1 is based on PDF 1.4, which has no object streams.
         stream_mode = (pikepdf.ObjectStreamMode.disable if target.version == "1.4"
                        else pikepdf.ObjectStreamMode.preserve)
-        pdf.save(dst, object_stream_mode=stream_mode, force_version=target.version)
+        with warnings_module.catch_warnings():
+            # pikepdf may warn about the input's own oddities (e.g. form
+            # widgets outside /AcroForm), which the light route keeps.
+            warnings_module.simplefilter("ignore")
+            pdf.save(dst, object_stream_mode=stream_mode,
+                     force_version=target.version)
     return warnings
 
 
@@ -712,6 +762,25 @@ def convert(src: Path, dst: Path, target: Target, *, icc: IccProfile, gs: str,
     return warnings
 
 
+def convert_light(src: Path, dst: Path, target: Target, *, icc: IccProfile,
+                  password: str = "") -> list[str]:
+    """The light route (--light): SRC made PDF/A at DST without Ghostscript,
+    keeping the pages as they are; only what pikepdf can fix is fixed
+    (metadata, output intent, JavaScript, attachments, layers, encryption).
+    Whether the result is valid is for veraPDF to say."""
+    title = src.stem
+    with tempfile.TemporaryDirectory(prefix="pdf2iso-") as tmp:
+        work = Path(tmp)
+        clean = work / "input.pdf"
+        final = work / "final.pdf"
+        facts = prepare_input(src, clean, password)
+        title = facts.info.get("/Title", title)
+        warnings = finalize(clean, final, target, facts, title, intent=icc)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(final, dst)
+    return warnings
+
+
 @dataclass
 class Outcome:
     """What happened to one file: status is "OK", "BAD" (converted, but the
@@ -722,6 +791,7 @@ class Outcome:
     details: list[str] = None       # the validator's report, the problems
     error: str = ""                 # why it failed
     skipped: bool = False           # (failed because it would overwrite)
+    light: bool = False             # made by the light route (--light)
 
     def __post_init__(self):
         self.warnings = self.warnings or []
@@ -736,17 +806,50 @@ def output_path(src: Path, target: Target, outdir: Path | None = None,
     return (outdir or src.parent) / f"{src.stem}{suffix}.pdf"
 
 
+def try_light(src: Path, dst: Path, target: Target, *, icc: IccProfile,
+              verapdf: str, password: str = "",
+              verbose: bool = False) -> tuple[Outcome | None, str]:
+    """The light route: (the Outcome, "") if veraPDF passes it, and then DST
+    is written; or else (None, why not), and DST is left alone."""
+    with tempfile.TemporaryDirectory(prefix="pdf2iso-light-") as tmp:
+        attempt = Path(tmp) / "light.pdf"
+        try:
+            warnings = convert_light(src, attempt, target, icc=icc,
+                                     password=password)
+        except (ConversionError, OSError) as exc:
+            return None, str(exc)
+        passed, report = validate_pdfa(verapdf, attempt, target)
+        if not passed:
+            return None, "veraPDF did not pass it" + (f":\n{report}" if verbose else "")
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(attempt, dst)
+    return Outcome("OK", "veraPDF: PASS", warnings, [report] if verbose else [],
+                   light=True), ""
+
+
 def process(src: Path, dst: Path, target: Target, *, icc: IccProfile, gs: str,
             verapdf: str | None = None, password: str = "",
-            condition: str = "Custom", verbose: bool = False) -> Outcome:
+            condition: str = "Custom", verbose: bool = False,
+            light: bool = False) -> Outcome:
     """Convert SRC to DST and check the result: with veraPDF (PDF/A, if
-    VERAPDF is given) or with check_pdfx4 (PDF/X-4)."""
+    VERAPDF is given) or with check_pdfx4 (PDF/X-4).  With LIGHT (PDF/A-2b
+    and 3b, and VERAPDF needed), the light route is tried first, and
+    Ghostscript is used only if veraPDF does not pass its result."""
     if dst.resolve() == src.resolve():
         return Outcome("FAIL", error="output would overwrite the input",
                        skipped=True)
+    notes = []
+    if light:
+        outcome, why_not = try_light(src, dst, target, icc=icc, verapdf=verapdf,
+                                     password=password, verbose=verbose)
+        if outcome is not None:
+            return outcome
+        notes.append(f"the light conversion was not used ({why_not}); "
+                     "converted with Ghostscript")
     try:
-        warnings = convert(src, dst, target, icc=icc, gs=gs, password=password,
-                           condition=condition, verbose=verbose)
+        warnings = notes + convert(src, dst, target, icc=icc, gs=gs,
+                                   password=password, condition=condition,
+                                   verbose=verbose)
     except (ConversionError, OSError) as exc:
         return Outcome("FAIL", error=str(exc))
     if target.family == "A" and verapdf:
@@ -789,6 +892,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--validate", action="store_true",
                     help="PDF/A only: validate with veraPDF and fail if it is missing "
                          "(PDF/X-4 output is always given a built-in structural check)")
+    ap.add_argument("--light", action="store_true",
+                    help="PDF/A-2b and 3b only: first try a light conversion that "
+                         "keeps the pages as they are (pikepdf only, without "
+                         "Ghostscript), and keep it if veraPDF passes it; otherwise "
+                         "convert with Ghostscript. Useful for scans that "
+                         "Ghostscript makes much larger. Needs veraPDF")
     ap.add_argument("--verapdf", help="path to the veraPDF command-line tool")
     ap.add_argument("--version", action="version",
                     version=f"pdf2iso {VERSION}")
@@ -801,12 +910,15 @@ def main(argv: list[str] | None = None) -> int:
         ap.error("--output can only be used with a single input; use --outdir")
     if target.family == "A" and args.condition != "Custom":
         ap.error("--condition only applies to PDF/X")
+    if args.light and not (target.family == "A" and target.part >= 2):
+        ap.error("--light only works with -t a-2b and a-3b")
 
     # Check every dependency before touching any file.
     try:
         gs = find_ghostscript()
         icc = find_icc_profile(args.icc, target)
-        verapdf = (find_verapdf(args.verapdf, args.validate)
+        verapdf = (find_verapdf(args.verapdf, args.validate or args.light,
+                                "--light" if args.light else "--validate")
                    if target.family == "A" else None)
     except ConversionError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -817,7 +929,7 @@ def main(argv: list[str] | None = None) -> int:
         dst = args.output or output_path(src, target, args.outdir, args.suffix)
         result = process(src, dst, target, icc=icc, gs=gs, verapdf=verapdf,
                          password=args.password, condition=args.condition,
-                         verbose=args.verbose)
+                         verbose=args.verbose, light=args.light)
         if result.status == "FAIL":
             print(f"{'skip' if result.skipped else 'FAIL'} {src}: {result.error}",
                   file=sys.stderr)
@@ -828,7 +940,8 @@ def main(argv: list[str] | None = None) -> int:
         for line in result.details:
             print(line, file=sys.stderr)
         check = f"({result.check})" if result.check else ""
-        print(f"{result.status:<4}{check} {src} -> {dst} [{target.name}]")
+        how = ", pages kept" if result.light else ""
+        print(f"{result.status:<4}{check} {src} -> {dst} [{target.name}{how}]")
         failures += result.status != "OK"
 
     return 1 if failures else 0
