@@ -156,6 +156,10 @@ and 3b at 24 MB, in 4 seconds instead of 72, with the pages and the text
 identical to the original.  When veraPDF does not pass the light result,
 the file is converted with Ghostscript as before.
 
+Version 2.1.1 changed only the documents: it added a list of the
+open-source software pdf2iso uses, with the licence of each
+(`docs/OPEN-SOURCE.md`, and `docs/OPEN-SOURCE_es.md` in Spanish).
+
 Testing
 -------
 

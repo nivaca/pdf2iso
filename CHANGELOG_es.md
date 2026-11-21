@@ -5,8 +5,11 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) y
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
-## Sin publicar
+## 2.1.1 — 2026-11-21
 
+- `docs/OPEN-SOURCE.md` y `docs/OPEN-SOURCE_es.md`: el software de
+  código abierto que usa pdf2iso, con la licencia de cada uno.  Los
+  README remiten a ellos.
 - `docs/DESCRIPCIÓN_es.md` se ciñe a seis secciones, cada una de menos
   de 4000 caracteres, en tercera persona. El programa no cambia.
 

@@ -260,7 +260,7 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `dist/pdf2iso-v.2.1.zip` (with the `VERSION` of
+It writes `dist/pdf2iso-v.2.1.1.zip` (with the `VERSION` of
 `pdf2iso.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does
@@ -292,4 +292,6 @@ a changed or bigger program that includes it must be distributed under the
 same licence, with its source code.  The copyright notice recognizes
 Nicolas Vaughan (<nicolasvaughan@proton.me>, 2026).  Ghostscript, pikepdf and veraPDF are
 separate programs, with their own licences; pdf2iso runs them or
-imports them, but does not include them.
+imports them, but does not include them.  The open-source software
+pdf2iso uses, with the licence of each, is listed in
+[docs/OPEN-SOURCE.md](docs/OPEN-SOURCE.md).

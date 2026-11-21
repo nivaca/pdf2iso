@@ -5,8 +5,11 @@ The releases, with their zip files, are on
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) and
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
-## Unreleased
+## 2.1.1 — 2026-11-21
 
+- `docs/OPEN-SOURCE.md` and `docs/OPEN-SOURCE_es.md`: the open-source
+  software pdf2iso uses, with the licence of each.  The READMEs point
+  to them.
 - `docs/DESCRIPCIÓN_es.md` keeps to six sections, each under 4000
   characters, in the third person. The program does not change.
 
