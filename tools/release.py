@@ -19,7 +19,7 @@ In order, each step only if it is needed:
 1. checks that the repository is on main, with nothing left to commit,
    that gh, tea and gpg are installed, that the signing key is in gpg
    and, unless --no-zenodo, that there is a Zenodo token in
-   $ZENODO_TOKEN;
+   $ZENODO_TOKEN or the keyring;
 2. makes the zip in dist/ (tools/bundle-zip.py), unless --no-build (then
    the one in dist/ is used);
 3. signs it (tools/sign_release.py: dist/pdf2iso-v.VERSION.zip.asc, and
@@ -80,6 +80,16 @@ BRANCH = "main"
 SIGNING_KEY = "81870643CA221AF90C30554EBE6832CD35994948"
 PUBLIC_KEY = os.path.join("packaging", "RPM-GPG-KEY-pdf2iso")
 SUMS = os.path.join("dist", "SHA256SUMS")
+
+
+def zenodo_token() -> bool:
+    """Whether tools/zenodo.py finds a Zenodo token, in $ZENODO_TOKEN or
+    in the desktop keyring (secret-tool)."""
+    tool = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "tools", "zenodo.py")
+    done = subprocess.run([sys.executable, tool, "check-token"],
+                          capture_output=True, check=False)
+    return done.returncode == 0
 
 
 class Release:
@@ -145,9 +155,9 @@ class Release:
                      "published with the release")
         # (sin token se para aquí, antes de hacer nada, y no al final)
         if not self.args.no_zenodo and not self.args.dry_run \
-                and not os.environ.get("ZENODO_TOKEN"):
-            sys.exit("release.py: the upload to Zenodo needs a token in "
-                     "$ZENODO_TOKEN (see tools/zenodo.py); --no-zenodo "
+                and not zenodo_token():
+            sys.exit("release.py: the upload to Zenodo needs a token "
+                     "(see tools/zenodo.py check-token); --no-zenodo "
                      "leaves it out")
         branch = self.read("git", "rev-parse", "--abbrev-ref", "HEAD")
         if branch != BRANCH:
@@ -350,7 +360,7 @@ def main(argv=None):
     parser.add_argument("--no-zenodo", action="store_true",
                         help="don't upload the deposit to Zenodo (by default "
                              "it goes as a draft, never published, with the "
-                             "token in $ZENODO_TOKEN)")
+                             "token in $ZENODO_TOKEN or the keyring)")
     parser.add_argument("-n", "--dry-run", action="store_true",
                         help="only show the commands")
     parser.add_argument("-y", "--yes", action="store_true",
