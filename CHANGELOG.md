@@ -5,6 +5,24 @@ The releases, with their zip files, are on
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) and
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
+## Unreleased
+
+- **Signed releases.** The tag of each release is signed, and every file
+  published has its signature (`FILE.asc`), with `SHA256SUMS`, signed too,
+  and the public key `packaging/RPM-GPG-KEY-pdf2iso`, all attached to the
+  release. `tools/release.py` signs them (`tools/sign_release.py`) and
+  checks every signature with only that key before anything is published; an
+  unsigned tag already on the commit is signed and pushed again.
+- `tools/zenodo.py` prepares the deposit of a release for Zenodo. `collect`
+  puts in `dist/zenodo/` the tree of the tag as
+  `pdf2iso-VERSION-source.tar.gz`, with its signature, a signed `SHA256SUMS`
+  of the deposit and the public key, and checks every signature with only
+  that key (`--packages` adds the files of the release). `upload` sends it
+  to Zenodo as a draft, a new version of the deposit if there is one
+  already, and never publishes it. `tools/release.py` now collects the
+  deposit after the tag and uploads it as a draft, unless `--no-zenodo`. The
+  metadata are in `.zenodo.json`.
+
 ## 2.1.1 — 2026-11-21
 
 - `docs/OPEN-SOURCE.md` and `docs/OPEN-SOURCE_es.md`: the open-source

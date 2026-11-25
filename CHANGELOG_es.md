@@ -5,6 +5,25 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) y
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
+## Sin publicar
+
+- **Versiones firmadas.** La etiqueta de cada versión va firmada, y cada
+  archivo publicado lleva su firma (`ARCHIVO.asc`), con `SHA256SUMS`,
+  firmado también, y la clave pública `packaging/RPM-GPG-KEY-pdf2iso`, todo
+  adjunto a la versión. `tools/release.py` los firma
+  (`tools/sign_release.py`) y comprueba cada firma con solo esa clave antes
+  de publicar nada; una etiqueta sin firma que ya esté en el commit se firma
+  y se sube de nuevo.
+- `tools/zenodo.py` prepara el depósito de una versión en Zenodo. `collect`
+  deja en `dist/zenodo/` el árbol de la etiqueta como
+  `pdf2iso-VERSIÓN-source.tar.gz`, con su firma, un `SHA256SUMS` del
+  depósito, firmado, y la clave pública, y comprueba cada firma con solo esa
+  clave (`--packages` añade los archivos de la versión). `upload` lo sube a
+  Zenodo como borrador, versión nueva del depósito si ya lo hay, y nunca lo
+  publica. `tools/release.py` reúne ahora el depósito después de la etiqueta
+  y lo sube como borrador, salvo con `--no-zenodo`. Los metadatos están en
+  `.zenodo.json`.
+
 ## 2.1.1 — 2026-11-21
 
 - `docs/OPEN-SOURCE.md` y `docs/OPEN-SOURCE_es.md`: el software de

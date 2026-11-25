@@ -8,7 +8,8 @@ pdf2iso.py; dist is made in the program's folder if need be, and
 name.  It has the script, the licence and the documents, but no hidden
 files or folders (.git ...), none of what is made while the program runs
 or is edited (__pycache__, .bak and .tmp files ...), and nothing that is
-in its folder but not part of it (dist/ and tools/).  It also has COMMIT,
+in its folder but not part of it (dist/, tools/, tests/ and packaging/,
+with the public key that signs the releases).  It also has COMMIT,
 the commit it was made from.
 """
 
@@ -33,8 +34,9 @@ DIST = os.path.join(ROOT, "dist")
 LEFT_OUT = ("__pycache__", "*.pyc", "*.bak", "*.tmp", "*~",
             "pdf2iso-v*.zip")
 #  What is in the program's folder but not part of it: the folder of the
-#  bundles and the tools that make them and the releases
-NOT_PART = ("dist", "tools")
+#  bundles, the tools that make them and the releases, the tests and the
+#  public key
+NOT_PART = ("dist", "tools", "tests", "packaging")
 
 
 def version() -> str:

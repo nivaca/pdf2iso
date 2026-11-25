@@ -1,26 +1,45 @@
 #!/usr/bin/env python3
 """Publishes a release of pdf2iso on GitHub (with gh) and on
 Codeberg (with tea): the tag vVERSION (the VERSION of pdf2iso.py),
-with the zip attached.
+signed, with the zip and its signature (FILE.asc), SHA256SUMS and its
+signature, and the public key that checks them, attached; and the
+deposit of the release on Zenodo, as a draft.
 
     python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
                              [--no-build] [--only github|codeberg]
-                             [--dry-run] [--yes]
+                             [--no-zenodo] [--dry-run] [--yes]
+
+Everything is signed with the project's key (SIGNING_KEY, the same in all
+the author's projects), and every signature is checked, with only the
+public key published (packaging/RPM-GPG-KEY-pdf2iso), before anything is
+published.
 
 In order, each step only if it is needed:
 
 1. checks that the repository is on main, with nothing left to commit,
-   and that gh and tea are installed;
+   that gh, tea and gpg are installed, that the signing key is in gpg
+   and, unless --no-zenodo, that there is a Zenodo token in
+   $ZENODO_TOKEN;
 2. makes the zip in dist/ (tools/bundle-zip.py), unless --no-build (then
    the one in dist/ is used);
-3. tags HEAD as vVERSION.  If the tag is there already on another commit,
-   it stops, unless --redo moves it;
-4. pushes main and the tag to the remote (origin, which pushes to both
+3. signs it (tools/sign_release.py: dist/pdf2iso-v.VERSION.zip.asc, and
+   dist/SHA256SUMS with its .asc), and checks each signature with only
+   the public key; gpg asks for the passphrase;
+4. tags HEAD as vVERSION, with a tag signed with the same key (git tag
+   --sign), and checks it (git tag --verify).  If the tag is there
+   already on another commit, it stops, unless --redo moves it;
+5. collects the deposit for Zenodo in dist/zenodo/ (tools/zenodo.py
+   collect: the tree of the tag, signed, with SHA256SUMS and the public
+   key, each signature checked with only that key);
+6. pushes main and the tag to the remote (origin, which pushes to both
    GitHub and Codeberg; --redo pushes the tag with --force);
-5. on Codeberg, switches releases on for the repository if they are off
+7. on Codeberg, switches releases on for the repository if they are off
    (new repositories may have them off);
-6. on each forge, makes the release of the tag, or keeps the existing
-   one, and attaches the zip to it, replacing one of the same name.
+8. on each forge, makes the release of the tag, or keeps the existing
+   one, and attaches the files to it, replacing those of the same name;
+9. unless --no-zenodo, uploads dist/zenodo/ to Zenodo as a draft
+   (tools/zenodo.py upload).  The draft is never published here: review
+   it and publish it on Zenodo by hand.
 
 Before doing anything, it shows the commands it will run and asks; --yes
 does not ask, --dry-run only shows them.  The notes of a new release are
@@ -55,6 +74,12 @@ VERSION = bundle_zip.version()
 TAG = f"v{VERSION}"
 ZIP = os.path.join("dist", bundle_zip.name() + ".zip")
 BRANCH = "main"
+# La clave con que se firma todo lo publicado: la misma en todos los
+# proyectos del autor (la que fija packaging/build-rpm.sh en los que hacen
+# un RPM)
+SIGNING_KEY = "81870643CA221AF90C30554EBE6832CD35994948"
+PUBLIC_KEY = os.path.join("packaging", "RPM-GPG-KEY-pdf2iso")
+SUMS = os.path.join("dist", "SHA256SUMS")
 
 
 class Release:
@@ -104,12 +129,26 @@ class Release:
     # Checks -----------------------------------------------------------
 
     def check(self):
-        tools = ("git",) + tuple(
+        tools = ("git", "gpg") + tuple(
             t for t, f in (("gh", "github"), ("tea", "codeberg"))
             if f in self.forges)
         for tool in tools:
             if not shutil.which(tool):
                 sys.exit(f"release.py: {tool} is not installed")
+        # Todo se firma, siempre: sin la clave no hay versión
+        if subprocess.run(["gpg", "--batch", "--list-secret-keys", SIGNING_KEY],
+                          capture_output=True).returncode != 0:
+            sys.exit(f"release.py: the signing key {SIGNING_KEY} is not in "
+                     "this machine's gpg keyring; import it first")
+        if not os.path.isfile(os.path.join(ROOT, PUBLIC_KEY)):
+            sys.exit(f"release.py: there is no {PUBLIC_KEY}, the public key "
+                     "published with the release")
+        # (sin token se para aquí, antes de hacer nada, y no al final)
+        if not self.args.no_zenodo and not self.args.dry_run \
+                and not os.environ.get("ZENODO_TOKEN"):
+            sys.exit("release.py: the upload to Zenodo needs a token in "
+                     "$ZENODO_TOKEN (see tools/zenodo.py); --no-zenodo "
+                     "leaves it out")
         branch = self.read("git", "rev-parse", "--abbrev-ref", "HEAD")
         if branch != BRANCH:
             sys.exit(f"release.py: on branch {branch}, not {BRANCH}")
@@ -146,25 +185,51 @@ class Release:
         self.plan("Make the zip", sys.executable,
                   os.path.join("tools", "bundle-zip.py"))
 
+    def sign(self):
+        """Every file published signed (FILE.asc), with SHA256SUMS and its
+        signature, and each signature checked with only the public key
+        published."""
+        signed = [f for f in self.files if f != PUBLIC_KEY]
+        self.plan("Sign the files, and check each signature with the "
+                  "published key", sys.executable,
+                  os.path.join("tools", "sign_release.py"), "--key",
+                  SIGNING_KEY, "--public", PUBLIC_KEY, "--sums", SUMS,
+                  *signed)
+        self.files = (signed + [f"{f}.asc" for f in signed]
+                      + [SUMS, f"{SUMS}.asc", PUBLIC_KEY])
+
     def tag(self):
         head = self.read("git", "rev-parse", "HEAD")
         tagged = self.read("git", "rev-parse", "--verify", "--quiet",
                            f"refs/tags/{TAG}^{{commit}}", check=False)
-        if tagged == head:
+        #  A tag on HEAD from before releases were signed is signed now,
+        #  and pushed again, replacing the old one on the forges
+        unsigned = tagged == head and subprocess.run(
+            ["git", "tag", "--verify", TAG], cwd=ROOT,
+            capture_output=True).returncode != 0
+        if tagged == head and not unsigned:
             pass
-        elif tagged and not self.args.redo:
+        elif tagged and tagged != head and not self.args.redo:
             sys.exit(f"release.py: {TAG} is already the tag of "
                      f"{tagged[:7]}, not of HEAD ({head[:7]}); raise VERSION "
                      f"in pdf2iso.py for a new release, or --redo "
-                     "moves the tag (and replaces the zip of the releases)")
+                     "moves the tag (and replaces the files of the releases)")
         else:
-            self.plan("Move the tag to HEAD" if tagged else "Tag HEAD",
-                      "git", "tag", "--force", "--annotate", TAG,
+            self.plan("Sign the tag of HEAD (it was not signed)" if unsigned
+                      else "Move the tag to HEAD, signed" if tagged
+                      else "Tag HEAD, signed", "git", "tag", "--force",
+                      "--sign", "--local-user", SIGNING_KEY, TAG,
                       "--message", TAG)
+            self.plan("Check the signature of the tag", "git", "tag",
+                      "--verify", TAG)
+        #  The deposit for Zenodo, from the tag (uploaded at the end)
+        self.plan("Zenodo: collect the deposit in dist/zenodo/",
+                  sys.executable, os.path.join("tools", "zenodo.py"),
+                  "collect", "--tag", TAG)
         self.plan(f"Push {BRANCH}", "git", "push", self.args.remote, BRANCH)
         #  With --redo the tag is always pushed with --force: the remote
         #  pushes to two forges, and only the first is seen here
-        if self.args.redo:
+        if self.args.redo or unsigned:
             self.plan("Push the tag (replacing it on the forges)", "git",
                       "push", "--force", self.args.remote, f"refs/tags/{TAG}")
             return
@@ -191,12 +256,12 @@ class Release:
         exists = subprocess.run(["gh", "release", "view", TAG, "--repo", repo],
                                 cwd=ROOT, capture_output=True).returncode == 0
         if exists:
-            self.plan("GitHub: attach the zip to the release (replacing the "
-                      "one there)", "gh", "release", "upload", TAG, ZIP,
-                      "--clobber", "--repo", repo)
+            self.plan("GitHub: attach the files to the release (replacing "
+                      "those there)", "gh", "release", "upload", TAG,
+                      *self.files, "--clobber", "--repo", repo)
         else:
             self.plan("GitHub: make the release", "gh", "release", "create",
-                      TAG, ZIP, "--title", TAG, "--verify-tag",
+                      TAG, *self.files, "--title", TAG, "--verify-tag",
                       *self.notes(True), "--repo", repo)
 
     def codeberg(self, repo: str):
@@ -215,17 +280,20 @@ class Release:
         if exists:
             names = {a.get("name") for a in self.tea_json(
                 "releases", "assets", "ls", TAG, *where)}
-            if os.path.basename(ZIP) in names:
-                self.plan("Codeberg: remove the zip of the same name (tea "
-                          "cannot replace it)", "tea", "releases", "assets",
-                          "delete", TAG, os.path.basename(ZIP), "--confirm",
-                          *where)
-            self.plan("Codeberg: attach the zip to the release", "tea",
-                      "releases", "assets", "create", TAG, ZIP, *where)
+            old = [os.path.basename(f) for f in self.files
+                   if os.path.basename(f) in names]
+            if old:
+                self.plan("Codeberg: remove the files of the same name (tea "
+                          "cannot replace them)", "tea", "releases", "assets",
+                          "delete", TAG, *old, "--confirm", *where)
+            self.plan("Codeberg: attach the files to the release", "tea",
+                      "releases", "assets", "create", TAG, *self.files,
+                      *where)
         else:
+            assets = [a for f in self.files for a in ("--asset", f)]
             self.plan("Codeberg: make the release", "tea", "releases",
                       "create", "--tag", TAG, "--title", TAG,
-                      *self.notes(False), "--asset", ZIP, *where)
+                      *self.notes(False), *assets, *where)
 
     def tea_json(self, *command) -> list[dict]:
         """The rows tea gives in JSON, with its keys made plain ("tag-_name"
@@ -242,23 +310,30 @@ class Release:
 
     def __call__(self):
         self.forges = [self.args.only] if self.args.only else ["github", "codeberg"]
+        self.files = [ZIP, PUBLIC_KEY]
         self.check()
         repos = self.repos()
         self.build()
+        self.sign()
         self.tag()
         for forge in self.forges:
             getattr(self, forge)(repos[forge])
+        if not self.args.no_zenodo:
+            self.plan("Zenodo: upload the deposit as a draft (not published)",
+                      sys.executable, os.path.join("tools", "zenodo.py"),
+                      "upload")
         self.run_plan()
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="tools/release.py",
-        description=f"Publish {TAG} on GitHub and Codeberg, with the zip.")
+        description=f"Publish {TAG} on GitHub and Codeberg, with the zip, "
+                    "all signed, and upload its deposit to Zenodo as a draft.")
     parser.add_argument("--redo", action="store_true",
                         help=f"move {TAG} to HEAD if it is on another commit "
-                             "(here and on the remote), and replace the zip "
-                             "of the releases")
+                             "(here and on the remote), and replace the "
+                             "files of the releases")
     notes = parser.add_mutually_exclusive_group()
     notes.add_argument("--notes", metavar="TEXT",
                        help="the notes of a new release")
@@ -272,6 +347,10 @@ def main(argv=None):
                         help="the remote to push to (default: origin)")
     parser.add_argument("--tea-login", default="codeberg",
                         help="the login of tea for Codeberg (default: codeberg)")
+    parser.add_argument("--no-zenodo", action="store_true",
+                        help="don't upload the deposit to Zenodo (by default "
+                             "it goes as a draft, never published, with the "
+                             "token in $ZENODO_TOKEN)")
     parser.add_argument("-n", "--dry-run", action="store_true",
                         help="only show the commands")
     parser.add_argument("-y", "--yes", action="store_true",

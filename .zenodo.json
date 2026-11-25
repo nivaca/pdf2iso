@@ -1,0 +1,21 @@
+{
+  "title": "pdf2iso",
+  "upload_type": "software",
+  "description": "<p>Converts PDF files to PDF/A, for long-term archiving (PDF/A-1b, PDF/A-2b and PDF/A-3b), and to PDF/X-4, for printing.</p>",
+  "creators": [
+    {
+      "name": "Vaughan, Nicolas",
+      "affiliation": "Universidad de los Andes",
+      "orcid": "0000-0002-2877-0539"
+    }
+  ],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "keywords": [
+    "pdf",
+    "PDF/A",
+    "PDF/X",
+    "archiving",
+    "Ghostscript"
+  ]
+}
