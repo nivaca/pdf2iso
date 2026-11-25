@@ -32,6 +32,9 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
   publica. `tools/release.py` reúne ahora el depósito después de la etiqueta
   y lo sube como borrador, salvo con `--no-zenodo`. Los metadatos están en
   `.zenodo.json`.
+- `tools/zenodo.py`: la descripción del depósito deja fuera la línea que
+  lleva a los README en otras lenguas y la sección Screenshots, cuyas
+  imágenes Zenodo no muestra.
 
 ## 2.1.1 — 2026-11-21
 
