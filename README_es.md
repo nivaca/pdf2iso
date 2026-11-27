@@ -262,7 +262,7 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `build/release/pdf2iso-v.2.1.1.zip` (con la `VERSION` de
+Escribe `build/release/pdf2iso-v.2.1.2.zip` (con la `VERSION` de
 `pdf2iso.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No

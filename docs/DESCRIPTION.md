@@ -160,6 +160,22 @@ Version 2.1.1 changed only the documents: it added a list of the
 open-source software pdf2iso uses, with the licence of each
 (`docs/OPEN-SOURCE.md`, and `docs/OPEN-SOURCE_es.md` in Spanish).
 
+Version 2.1.2 did not touch the conversion either; it changed the way the
+releases are made.  Every release is now signed with the key of the
+project: the tag, the ZIP and a `SHA256SUMS` of the files each have their
+signature, and the public key, `packaging/RPM-GPG-KEY-pdf2iso`, goes with
+them.  `tools/sign_release.py` does the signing, and before anything is
+published it checks every signature as a user would, with only that
+public key, in a temporary GnuPG home.  `tools/zenodo.py` deposits the
+source of each tag on Zenodo, signed as well, as a new version of the
+same record, with the README as its description.  Zenodo's deposit API
+does not take all the metadata of the record, so the programming language
+and the development status go through its records API, which has a format
+of its own.  The token of Zenodo can be kept in the desktop keyring
+instead of an environment variable.  Nothing of a release stays in the
+folder of the project any more: it is made in `build/`, published from
+there, and deleted.
+
 Testing
 -------
 
@@ -191,8 +207,15 @@ PDF/X-4 allows attachments could not be confirmed from public sources, so
 the program now removes them in PDF/X-4 too, with a warning, and the
 structural check rejects a PDF/X-4 file that has one.
 
-The program is one file of around 800 lines; the two tools in `tools/`
-add around 400 more.  `release.py` was tried with `--dry-run`, which only
+The release tools have 23 automated tests, in two files: three for the
+signing and twenty for the deposit on Zenodo.  They sign with a throwaway
+key, made in a temporary GnuPG home, and talk to a small local server in
+place of Zenodo, so they never use my key or the real service.
+`tools/test.py` runs them at once, each file in a `pytest` of its own.
+
+The program is one file of around 950 lines; the five tools in `tools/`
+add around 1,600 more, and the tests around 550.  The repository has 21
+files.  `release.py` was tried with `--dry-run`, which only
 shows its plan: on the repository as it was after 1.0 (it would replace
 the ZIP of the existing releases), and in a copy of it with a new commit,
 first with the same version (it stops) and then with version 1.1 (it

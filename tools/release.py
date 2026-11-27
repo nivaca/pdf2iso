@@ -361,7 +361,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="tools/release.py",
         description=f"Publish {TAG} on GitHub and Codeberg, with the zip, "
-                    "all signed, and upload its deposit to Zenodo as a draft.")
+                    "all signed, and publish its deposit on Zenodo.")
     parser.add_argument("--redo", action="store_true",
                         help=f"move {TAG} to HEAD if it is on another commit "
                              "(here and on the remote), and replace the "

@@ -5,7 +5,7 @@ pdf2iso es software libre, bajo la Licencia Pública General de GNU,
 versión 3 o posterior (GPL-3.0-or-later).  Está hecho con el software de
 código abierto de esta lista, y funciona sobre él; de cada uno se da la
 licencia, con su identificador SPDX.  Las versiones son aquellas con las
-que se comprobó pdf2iso 2.1.1.  Cada paquete lleva el texto completo de su
+que se comprobó pdf2iso 2.1.2.  Cada paquete lleva el texto completo de su
 propia licencia.  pdf2iso no incluye ninguno: importa los paquetes de
 Python y ejecuta los programas.
 
@@ -71,3 +71,6 @@ del programa.
 | [Git](https://git-scm.com) | La historia del código; el commit que se anota en el zip (`COMMIT`) | GPL-2.0-only |
 | [GitHub CLI](https://cli.github.com) (`gh`) | Las versiones en GitHub (`tools/release.py`) | MIT |
 | [tea](https://gitea.com/gitea/tea) | Las versiones en Codeberg (`tools/release.py`) | MIT |
+| [GnuPG](https://gnupg.org) (`gpg`) | Firmar la etiqueta y los archivos de cada versión, y comprobar las firmas (`tools/sign_release.py`) | GPL-3.0-or-later |
+| [libsecret](https://gitlab.gnome.org/GNOME/libsecret) (`secret-tool`) | Guardar el token de Zenodo en el llavero del escritorio (`tools/zenodo.py`) | LGPL-2.1-or-later |
+| [pytest](https://pytest.org) | Las pruebas de las herramientas de publicación (`tools/test.py`) | MIT |

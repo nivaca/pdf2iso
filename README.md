@@ -260,7 +260,7 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `build/release/pdf2iso-v.2.1.1.zip` (with the `VERSION` of
+It writes `build/release/pdf2iso-v.2.1.2.zip` (with the `VERSION` of
 `pdf2iso.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does

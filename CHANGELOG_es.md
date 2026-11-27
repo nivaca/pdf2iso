@@ -5,7 +5,7 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) y
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
-## Sin publicar
+## 2.1.2 — 2026-11-27
 
 - `tools/test.py` corre las pruebas a la vez, cada archivo de pruebas en un
   `pytest` propio; `tools/release.py` las corre así antes de todo
@@ -48,6 +48,7 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
   `--zenodo-draft` todavía lo deja. `tools/zenodo.py publish` publica un
   borrador que ya está allí (por omisión, el que espera con el título del
   proyecto).
+- El programa no cambia.
 
 ## 2.1.1 — 2026-11-21
 

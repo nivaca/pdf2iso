@@ -5,7 +5,7 @@ The releases, with their zip files, are on
 [Codeberg](https://codeberg.org/nivaca/pdf2iso/releases) and
 [GitHub](https://github.com/nivaca/pdf2iso/releases).
 
-## Unreleased
+## 2.1.2 — 2026-11-27
 
 - `tools/test.py` runs the tests at once, each test file in a `pytest` of
   its own; `tools/release.py` runs them so before anything else
@@ -46,6 +46,7 @@ The releases, with their zip files, are on
   (`tools/zenodo.py upload --publish`), instead of leaving a draft;
   `--zenodo-draft` still leaves one. `tools/zenodo.py publish` publishes a
   draft already there (by default the one waiting with the project's title).
+- The program does not change.
 
 ## 2.1.1 — 2026-11-21
 
