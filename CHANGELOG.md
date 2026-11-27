@@ -7,6 +7,11 @@ The releases, with their zip files, are on
 
 ## Unreleased
 
+- Nothing of a release is kept here any more: `tools/release.py` makes and
+  signs the ZIP and `SHA256SUMS` in `build/release/` (not `dist/`), and the
+  deposit for Zenodo in `build/zenodo/`, publishes them from there and
+  deletes both at the end. `tools/bundle-zip.py` writes to
+  `build/release/` by default.
 - `tools/zenodo.py`: the description of the deposit is now the whole
   README of the tag, in HTML. The draft also gets the contributor (the
   project leader), the languages, the copyright, the repository on GitHub,
@@ -23,7 +28,7 @@ The releases, with their zip files, are on
   checks every signature with only that key before anything is published; an
   unsigned tag already on the commit is signed and pushed again.
 - `tools/zenodo.py` prepares the deposit of a release for Zenodo. `collect`
-  puts in `dist/zenodo/` the tree of the tag as
+  puts in `build/zenodo/` the tree of the tag as
   `pdf2iso-VERSION-source.tar.gz`, with its signature, a signed `SHA256SUMS`
   of the deposit and the public key, and checks every signature with only
   that key (`--packages` adds the files of the release). `upload` sends it

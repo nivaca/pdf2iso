@@ -262,12 +262,12 @@ El ZIP del programa se hace con
 
     $ python3 tools/bundle-zip.py [-o CARPETA]
 
-Escribe `dist/pdf2iso-v.2.1.1.zip` (con la `VERSION` de
+Escribe `build/release/pdf2iso-v.2.1.1.zip` (con la `VERSION` de
 `pdf2iso.py`; `-o` da otra carpeta), con el programa dentro de una
 carpeta del mismo nombre.  Contiene el script, la licencia y los
 documentos, y un archivo `COMMIT` con el commit del que se hizo.  No
 contiene archivos ocultos (`.git`...), ni lo que se genera al ejecutar o
-editar el programa (`__pycache__`...), ni `dist/` y `tools/`.
+editar el programa (`__pycache__`...), ni `build/`, `dist/` y `tools/`.
 
 Una versión en GitHub y Codeberg, con el ZIP, se publica con
 
@@ -277,7 +277,10 @@ Una versión en GitHub y Codeberg, con el ZIP, se publica con
 Necesita `gh` (GitHub) y `tea` (Codeberg), y una rama `main` limpia.  Hace
 el ZIP, etiqueta el commit como `vVERSION`, sube `main` y la etiqueta, y
 crea la versión en cada forja (o conserva la que ya existe), le adjunta
-el ZIP y reemplaza el que tenga el mismo nombre.  Si el repositorio de
+el ZIP y reemplaza el que tenga el mismo nombre.  El ZIP, su firma y
+`SHA256SUMS` se hacen en `build/release/`, y el depósito para Zenodo en
+`build/zenodo/`; los dos se borran al final, ya publicados, así que aquí
+no queda nada de una versión.  Si el repositorio de
 Codeberg tiene las versiones desactivadas, primero las activa.  Muestra
 las órdenes y pregunta antes de ejecutarlas; `--dry-run` solo las
 muestra.  Para una versión nueva hay que subir antes `VERSION` en

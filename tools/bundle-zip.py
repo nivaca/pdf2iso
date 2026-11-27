@@ -2,13 +2,13 @@
 """Makes a zip of the program, to distribute it:
 python3 tools/bundle-zip.py [-o FOLDER]
 
-The zip is dist/pdf2iso-v.VERSION.zip (the VERSION of
-pdf2iso.py; dist is made in the program's folder if need be, and
+The zip is build/release/pdf2iso-v.VERSION.zip (the VERSION of
+pdf2iso.py; build/release is made in the program's folder if need be, and
 --output gives another folder), with the program in a folder of the same
 name.  It has the script, the licence and the documents, but no hidden
 files or folders (.git ...), none of what is made while the program runs
 or is edited (__pycache__, .bak and .tmp files ...), and nothing that is
-in its folder but not part of it (dist/, tools/, tests/ and packaging/,
+in its folder but not part of it (build/, dist/, tools/, tests/ and packaging/,
 with the public key that signs the releases).  It also has COMMIT,
 the commit it was made from.
 """
@@ -27,16 +27,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = "pdf2iso.py"
 COMMIT_FILE = "COMMIT"
 
-#  Where the zip goes, unless --output says otherwise
-DIST = os.path.join(ROOT, "dist")
+#  Where the zip goes, unless --output says otherwise: build/release/, where
+#  tools/release.py signs it and from where it is published (then deleted)
+OUT = os.path.join(ROOT, "build", "release")
 
 #  What is made while the program runs or is edited (as in .gitignore)
 LEFT_OUT = ("__pycache__", "*.pyc", "*.bak", "*.tmp", "*~",
             "pdf2iso-v*.zip")
-#  What is in the program's folder but not part of it: the folder of the
+#  What is in the program's folder but not part of it: the folders of the
 #  bundles, the tools that make them and the releases, the tests and the
 #  public key
-NOT_PART = ("dist", "tools", "tests", "packaging")
+NOT_PART = ("build", "dist", "tools", "tests", "packaging")
 
 
 def version() -> str:
@@ -108,12 +109,12 @@ def main(argv=None):
         description=f"Make a zip of the program, to distribute it: "
                     f"{name()}.zip, without hidden files.")
     parser.add_argument("-o", "--output", metavar="FOLDER", default=None,
-                        help="the folder to write it in (default: dist, in "
-                             "the program's folder)")
+                        help="the folder to write it in (default: build/release, "
+                             "in the program's folder)")
     args = parser.parse_args(argv)
     if args.output is None:
-        args.output = DIST
-        os.makedirs(DIST, exist_ok=True)
+        args.output = OUT
+        os.makedirs(OUT, exist_ok=True)
     elif not os.path.isdir(args.output):
         sys.exit(f"bundle-zip.py: there is no folder {args.output}")
     try:

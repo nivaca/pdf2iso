@@ -20,15 +20,15 @@ In order, each step only if it is needed:
    that gh, tea and gpg are installed, that the signing key is in gpg
    and, unless --no-zenodo, that there is a Zenodo token in
    $ZENODO_TOKEN or the keyring;
-2. makes the zip in dist/ (tools/bundle-zip.py), unless --no-build (then
-   the one in dist/ is used);
-3. signs it (tools/sign_release.py: dist/pdf2iso-v.VERSION.zip.asc, and
-   dist/SHA256SUMS with its .asc), and checks each signature with only
-   the public key; gpg asks for the passphrase;
+2. makes the zip in build/release/ (tools/bundle-zip.py), unless
+   --no-build (then the one in build/release/ is used);
+3. signs it (tools/sign_release.py: build/release/pdf2iso-v.VERSION.zip.asc,
+   and build/release/SHA256SUMS with its .asc), and checks each signature
+   with only the public key; gpg asks for the passphrase;
 4. tags HEAD as vVERSION, with a tag signed with the same key (git tag
    --sign), and checks it (git tag --verify).  If the tag is there
    already on another commit, it stops, unless --redo moves it;
-5. collects the deposit for Zenodo in dist/zenodo/ (tools/zenodo.py
+5. collects the deposit for Zenodo in build/zenodo/ (tools/zenodo.py
    collect: the tree of the tag, signed, with SHA256SUMS and the public
    key, each signature checked with only that key);
 6. pushes main and the tag to the remote (origin, which pushes to both
@@ -37,9 +37,12 @@ In order, each step only if it is needed:
    (new repositories may have them off);
 8. on each forge, makes the release of the tag, or keeps the existing
    one, and attaches the files to it, replacing those of the same name;
-9. unless --no-zenodo, uploads dist/zenodo/ to Zenodo and publishes it
+9. unless --no-zenodo, uploads build/zenodo/ to Zenodo and publishes it
    (tools/zenodo.py upload --publish), with a new DOI; with --zenodo-draft
-   it is left as a draft, to publish by hand.
+   it is left as a draft, to publish by hand;
+10. deletes build/release/ and build/zenodo/: the forges and Zenodo have
+   what they held, and nothing of a release is kept here (dist/ is not
+   used).
 
 Before doing anything, it shows the commands it will run and asks; --yes
 does not ask, --dry-run only shows them.  The notes of a new release are
@@ -72,14 +75,17 @@ _spec.loader.exec_module(bundle_zip)
 
 VERSION = bundle_zip.version()
 TAG = f"v{VERSION}"
-ZIP = os.path.join("dist", bundle_zip.name() + ".zip")
+# Lo que se publica se hace y se firma en build/release/, no en dist/: aquí
+# no se guarda nada de una versión una vez publicada (no hay RPM)
+OUT = os.path.join("build", "release")
+ZIP = os.path.join(OUT, bundle_zip.name() + ".zip")
 BRANCH = "main"
 # La clave con que se firma todo lo publicado: la misma en todos los
 # proyectos del autor (la que fija packaging/build-rpm.sh en los que hacen
 # un RPM)
 SIGNING_KEY = "81870643CA221AF90C30554EBE6832CD35994948"
 PUBLIC_KEY = os.path.join("packaging", "RPM-GPG-KEY-pdf2iso")
-SUMS = os.path.join("dist", "SHA256SUMS")
+SUMS = os.path.join(OUT, "SHA256SUMS")
 
 
 def zenodo_token() -> bool:
@@ -192,8 +198,10 @@ class Release:
                 sys.exit(f"release.py: there is no {ZIP} (leave out "
                          "--no-build to make it)")
             return
+        if not self.args.dry_run:
+            os.makedirs(os.path.join(ROOT, OUT), exist_ok=True)
         self.plan("Make the zip", sys.executable,
-                  os.path.join("tools", "bundle-zip.py"))
+                  os.path.join("tools", "bundle-zip.py"), "--output", OUT)
 
     def sign(self):
         """Every file published signed (FILE.asc), with SHA256SUMS and its
@@ -233,7 +241,7 @@ class Release:
             self.plan("Check the signature of the tag", "git", "tag",
                       "--verify", TAG)
         #  The deposit for Zenodo, from the tag (uploaded at the end)
-        self.plan("Zenodo: collect the deposit in dist/zenodo/",
+        self.plan("Zenodo: collect the deposit in build/zenodo/",
                   sys.executable, os.path.join("tools", "zenodo.py"),
                   "collect", "--tag", TAG)
         self.plan(f"Push {BRANCH}", "git", "push", self.args.remote, BRANCH)
@@ -333,6 +341,10 @@ class Release:
                                                        else " and publish it"),
                       sys.executable, os.path.join("tools", "zenodo.py"), "upload",
                       *([] if self.args.zenodo_draft else ["--publish"]))
+        #  Once all is published, nothing of it stays here
+        self.plan("Delete what was published from build/ (the forges and "
+                  "Zenodo have it)", "rm", "-rf", OUT,
+                  os.path.join("build", "zenodo"))
         self.run_plan()
 
 
@@ -351,7 +363,8 @@ def main(argv=None):
     notes.add_argument("--notes-file", metavar="FILE",
                        help="the notes of a new release, from FILE")
     parser.add_argument("--no-build", action="store_true",
-                        help="use the zip in dist/, without making it again")
+                        help="use the zip in build/release/, without making it "
+                             "again")
     parser.add_argument("--only", choices=("github", "codeberg"),
                         help="publish on one forge only")
     parser.add_argument("--remote", default="origin",

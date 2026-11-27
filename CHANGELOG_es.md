@@ -7,6 +7,11 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 
 ## Sin publicar
 
+- Ya no se guarda aquí nada de una versión: `tools/release.py` hace y firma
+  el ZIP y `SHA256SUMS` en `build/release/` (no en `dist/`), y el depósito
+  para Zenodo en `build/zenodo/`, los publica desde allí y al final borra
+  las dos carpetas. `tools/bundle-zip.py` escribe por omisión en
+  `build/release/`.
 - `tools/zenodo.py`: la descripción del depósito es ahora el README entero
   de la etiqueta, en HTML. El borrador recibe además el colaborador (el
   director del proyecto), los idiomas, el copyright, el repositorio en
@@ -24,7 +29,7 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
   de publicar nada; una etiqueta sin firma que ya esté en el commit se firma
   y se sube de nuevo.
 - `tools/zenodo.py` prepara el depósito de una versión en Zenodo. `collect`
-  deja en `dist/zenodo/` el árbol de la etiqueta como
+  deja en `build/zenodo/` el árbol de la etiqueta como
   `pdf2iso-VERSIÓN-source.tar.gz`, con su firma, un `SHA256SUMS` del
   depósito, firmado, y la clave pública, y comprueba cada firma con solo esa
   clave (`--packages` añade los archivos de la versión). `upload` lo sube a

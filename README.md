@@ -260,12 +260,12 @@ The ZIP of the program is made with
 
     $ python3 tools/bundle-zip.py [-o FOLDER]
 
-It writes `dist/pdf2iso-v.2.1.1.zip` (with the `VERSION` of
+It writes `build/release/pdf2iso-v.2.1.1.zip` (with the `VERSION` of
 `pdf2iso.py`; `-o` gives another folder), with the program inside a
 folder of the same name.  It contains the script, the licence and the
 documents, and a file `COMMIT` with the commit it was made from.  It does
 not contain hidden files (`.git` ...), nor what is made while the program
-runs or is edited (`__pycache__` ...), nor `dist/` and `tools/`.
+runs or is edited (`__pycache__` ...), nor `build/`, `dist/` and `tools/`.
 
 A release on GitHub and Codeberg, with the ZIP, is made with
 
@@ -275,7 +275,10 @@ A release on GitHub and Codeberg, with the ZIP, is made with
 It needs `gh` (GitHub) and `tea` (Codeberg), and a clean `main`.  It makes
 the ZIP, tags the commit `vVERSION`, pushes `main` and the tag, and makes
 the release on each forge (or keeps the existing one), attaching the ZIP
-and replacing one of the same name.  If releases are switched off for the
+and replacing one of the same name.  The ZIP, its signature and
+`SHA256SUMS` are made in `build/release/`, and the deposit for Zenodo in
+`build/zenodo/`; both are deleted at the end, once published, so nothing
+of a release is kept here.  If releases are switched off for the
 repository on Codeberg, it switches them on first.  It shows the commands
 and asks before running them; `--dry-run` only shows them.  For a new
 release, raise `VERSION` in `pdf2iso.py` first: if the tag is on
