@@ -287,8 +287,10 @@ todos a la vez; `--no-tests` las omite), hace el ZIP, etiqueta el commit como `v
 crea la versión en cada forja (o conserva la que ya existe), le adjunta
 el ZIP y reemplaza el que tenga el mismo nombre.  El ZIP, su firma y
 `SHA256SUMS` se hacen en `build/release/`, y el depósito para Zenodo en
-`build/zenodo/`; los dos se borran al final, ya publicados, así que aquí
-no queda nada de una versión.  Si el repositorio de
+`build/zenodo/`; los dos se borran al final, ya publicados.  Solo se
+guardan el ZIP y el código fuente del depósito
+(`pdf2iso-VERSIÓN-source.tar.gz`), en `dist/`, donde reemplazan los de la
+versión anterior.  Si el repositorio de
 Codeberg tiene las versiones desactivadas, primero las activa.  Muestra
 las órdenes y pregunta antes de ejecutarlas; `--dry-run` solo las
 muestra.  Para una versión nueva hay que subir antes `VERSION` en

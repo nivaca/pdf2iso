@@ -285,8 +285,9 @@ once; `--no-tests` leaves them out), makes the ZIP, tags the commit `vVERSION`, 
 the release on each forge (or keeps the existing one), attaching the ZIP
 and replacing one of the same name.  The ZIP, its signature and
 `SHA256SUMS` are made in `build/release/`, and the deposit for Zenodo in
-`build/zenodo/`; both are deleted at the end, once published, so nothing
-of a release is kept here.  If releases are switched off for the
+`build/zenodo/`; both are deleted at the end, once published.  Only the
+ZIP and the source archive of the deposit (`pdf2iso-VERSION-source.tar.gz`)
+are kept, in `dist/`, where they replace those of the earlier version.  If releases are switched off for the
 repository on Codeberg, it switches them on first.  It shows the commands
 and asks before running them; `--dry-run` only shows them.  For a new
 release, raise `VERSION` in `pdf2iso.py` first: if the tag is on

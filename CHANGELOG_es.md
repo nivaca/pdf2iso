@@ -10,10 +10,11 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 - `tools/test.py` corre las pruebas a la vez, cada archivo de pruebas en un
   `pytest` propio; `tools/release.py` las corre así antes de todo
   (`--no-tests` las omite).
-- Ya no se guarda aquí nada de una versión: `tools/release.py` hace y firma
-  el ZIP y `SHA256SUMS` en `build/release/` (no en `dist/`), y el depósito
-  para Zenodo en `build/zenodo/`, los publica desde allí y al final borra
-  las dos carpetas. `tools/bundle-zip.py` escribe por omisión en
+- `tools/release.py` hace y firma el ZIP y `SHA256SUMS` en
+  `build/release/` (no en `dist/`), y el depósito para Zenodo en
+  `build/zenodo/`, los publica desde allí y al final borra las dos
+  carpetas. Solo se guardan, en `dist/`, el ZIP y el código fuente
+  (`pdf2iso-VERSIÓN-source.tar.gz`) más nuevos. `tools/bundle-zip.py` escribe por omisión en
   `build/release/`.
 - `tools/zenodo.py`: la descripción del depósito es ahora el README entero
   de la etiqueta, en HTML. El borrador recibe además el colaborador (el

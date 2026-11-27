@@ -42,9 +42,11 @@ En orden, cada paso solo si hace falta:
 10. salvo con --no-zenodo, sube build/zenodo/ a Zenodo y lo publica
    (tools/zenodo.py upload --publish), con un DOI nuevo; con --zenodo-draft
    queda como borrador, para publicarlo a mano;
-11. borra build/release/ y build/zenodo/: las forjas y Zenodo ya tienen lo
-   que contenían, y aquí no se guarda nada de una versión (dist/ no se
-   usa).
+11. copia a dist/ el ZIP y el código fuente (pdf2iso-VERSIÓN-source.tar.gz,
+   el del depósito), en lugar de los de versiones anteriores: dist/ guarda
+   solo los más nuevos de cada clase;
+12. borra build/release/ y build/zenodo/: las forjas y Zenodo ya tienen lo
+   que contenían, firmas y SHA256SUMS incluidos.
 
 Antes de hacer nada, muestra las órdenes que va a correr y pregunta; con
 --yes no pregunta, y con --dry-run solo las muestra.  Las notas de una
@@ -77,10 +79,14 @@ _spec.loader.exec_module(bundle_zip)
 
 VERSION = bundle_zip.version()
 TAG = f"v{VERSION}"
-# Lo que se publica se hace y se firma en build/release/, no en dist/: aquí
-# no se guarda nada de una versión una vez publicada (no hay RPM)
+# Lo que se publica se hace y se firma en build/release/, no en dist/; de
+# una versión publicada solo quedan en dist/ el ZIP y el código fuente (no
+# hay RPM)
 OUT = os.path.join("build", "release")
 ZIP = os.path.join(OUT, bundle_zip.name() + ".zip")
+DIST = "dist"
+# The source archive of the deposit, as tools/zenodo.py collect names it
+SOURCE = os.path.join("build", "zenodo", f"pdf2iso-{VERSION}-source.tar.gz")
 BRANCH = "main"
 # La clave con que se firma todo lo publicado: la misma en todos los
 # proyectos del autor (la que fija packaging/build-rpm.sh en los que hacen
@@ -350,7 +356,13 @@ class Release:
                                                        else " and publish it"),
                       sys.executable, os.path.join("tools", "zenodo.py"), "upload",
                       *([] if self.args.zenodo_draft else ["--publish"]))
-        #  Once all is published, nothing of it stays here
+        #  Only the newest zip and source archive are kept, in dist/
+        self.plan("Keep the zip and the source in dist/, replacing older "
+                  "ones", "sh", "-c",
+                  f"mkdir -p {DIST} && rm -f {DIST}/pdf2iso-v.*.zip "
+                  f"{DIST}/pdf2iso-*-source.tar.gz && cp {ZIP} {SOURCE} "
+                  f"{DIST}/")
+        #  The rest of what was published does not stay here
         self.plan("Delete what was published from build/ (the forges and "
                   "Zenodo have it)", "rm", "-rf", OUT,
                   os.path.join("build", "zenodo"))

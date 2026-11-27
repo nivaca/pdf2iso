@@ -172,9 +172,9 @@ same record, with the README as its description.  Zenodo's deposit API
 does not take all the metadata of the record, so the programming language
 and the development status go through its records API, which has a format
 of its own.  The token of Zenodo can be kept in the desktop keyring
-instead of an environment variable.  Nothing of a release stays in the
-folder of the project any more: it is made in `build/`, published from
-there, and deleted.
+instead of an environment variable.  A release is made in `build/`,
+published from there and deleted; only the newest ZIP and source archive
+are kept, in `dist/`.
 
 Testing
 -------

@@ -10,10 +10,11 @@ The releases, with their zip files, are on
 - `tools/test.py` runs the tests at once, each test file in a `pytest` of
   its own; `tools/release.py` runs them so before anything else
   (`--no-tests` leaves them out).
-- Nothing of a release is kept here any more: `tools/release.py` makes and
-  signs the ZIP and `SHA256SUMS` in `build/release/` (not `dist/`), and the
-  deposit for Zenodo in `build/zenodo/`, publishes them from there and
-  deletes both at the end. `tools/bundle-zip.py` writes to
+- `tools/release.py` makes and signs the ZIP and `SHA256SUMS` in
+  `build/release/` (not `dist/`), and the deposit for Zenodo in
+  `build/zenodo/`, publishes them from there and deletes both at the end.
+  Only the newest ZIP and source archive (`pdf2iso-VERSION-source.tar.gz`)
+  are kept, in `dist/`. `tools/bundle-zip.py` writes to
   `build/release/` by default.
 - `tools/zenodo.py`: the description of the deposit is now the whole
   README of the tag, in HTML. The draft also gets the contributor (the
