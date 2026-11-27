@@ -6,7 +6,7 @@ signature, and the public key that checks them, attached; and the
 deposit of the release on Zenodo, as a draft.
 
     python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
-                             [--no-build] [--only github|codeberg]
+                             [--no-build] [--no-tests] [--only github|codeberg]
                              [--no-zenodo] [--dry-run] [--yes]
 
 Everything is signed with the project's key (SIGNING_KEY, the same in all
@@ -20,27 +20,29 @@ In order, each step only if it is needed:
    that gh, tea and gpg are installed, that the signing key is in gpg
    and, unless --no-zenodo, that there is a Zenodo token in
    $ZENODO_TOKEN or the keyring;
-2. makes the zip in build/release/ (tools/bundle-zip.py), unless
+2. runs the tests, each file in a process of its own, at once
+   (tools/test.py; unless --no-tests);
+3. makes the zip in build/release/ (tools/bundle-zip.py), unless
    --no-build (then the one in build/release/ is used);
-3. signs it (tools/sign_release.py: build/release/pdf2iso-v.VERSION.zip.asc,
+4. signs it (tools/sign_release.py: build/release/pdf2iso-v.VERSION.zip.asc,
    and build/release/SHA256SUMS with its .asc), and checks each signature
    with only the public key; gpg asks for the passphrase;
-4. tags HEAD as vVERSION, with a tag signed with the same key (git tag
+5. tags HEAD as vVERSION, with a tag signed with the same key (git tag
    --sign), and checks it (git tag --verify).  If the tag is there
    already on another commit, it stops, unless --redo moves it;
-5. collects the deposit for Zenodo in build/zenodo/ (tools/zenodo.py
+6. collects the deposit for Zenodo in build/zenodo/ (tools/zenodo.py
    collect: the tree of the tag, signed, with SHA256SUMS and the public
    key, each signature checked with only that key);
-6. pushes main and the tag to the remote (origin, which pushes to both
+7. pushes main and the tag to the remote (origin, which pushes to both
    GitHub and Codeberg; --redo pushes the tag with --force);
-7. on Codeberg, switches releases on for the repository if they are off
+8. on Codeberg, switches releases on for the repository if they are off
    (new repositories may have them off);
-8. on each forge, makes the release of the tag, or keeps the existing
+9. on each forge, makes the release of the tag, or keeps the existing
    one, and attaches the files to it, replacing those of the same name;
-9. unless --no-zenodo, uploads build/zenodo/ to Zenodo and publishes it
+10. unless --no-zenodo, uploads build/zenodo/ to Zenodo and publishes it
    (tools/zenodo.py upload --publish), with a new DOI; with --zenodo-draft
    it is left as a draft, to publish by hand;
-10. deletes build/release/ and build/zenodo/: the forges and Zenodo have
+11. deletes build/release/ and build/zenodo/: the forges and Zenodo have
    what they held, and nothing of a release is kept here (dist/ is not
    used).
 
@@ -192,6 +194,12 @@ class Release:
 
     # Steps ------------------------------------------------------------
 
+    def tests(self):
+        if not self.args.no_tests:
+            # (a la vez, cada archivo en su proceso: tools/test.py)
+            self.plan("Run the tests", sys.executable,
+                      os.path.join("tools", "test.py"))
+
     def build(self):
         if self.args.no_build:
             if not os.path.isfile(os.path.join(ROOT, ZIP)):
@@ -331,6 +339,7 @@ class Release:
         self.files = [ZIP, PUBLIC_KEY]
         self.check()
         repos = self.repos()
+        self.tests()
         self.build()
         self.sign()
         self.tag()
@@ -365,6 +374,8 @@ def main(argv=None):
     parser.add_argument("--no-build", action="store_true",
                         help="use the zip in build/release/, without making it "
                              "again")
+    parser.add_argument("--no-tests", action="store_true",
+                        help="don't run the tests first")
     parser.add_argument("--only", choices=("github", "codeberg"),
                         help="publish on one forge only")
     parser.add_argument("--remote", default="origin",

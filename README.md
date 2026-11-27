@@ -267,13 +267,21 @@ documents, and a file `COMMIT` with the commit it was made from.  It does
 not contain hidden files (`.git` ...), nor what is made while the program
 runs or is edited (`__pycache__` ...), nor `build/`, `dist/` and `tools/`.
 
+The tests are run with
+
+    $ python3 tools/test.py [-j N] [-v] [NAME ...]
+
+each test file in a `pytest` of its own, as many at once as there are
+processors (`-j` changes it).
+
 A release on GitHub and Codeberg, with the ZIP, is made with
 
     $ python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
-          [--no-build] [--only github|codeberg] [--dry-run] [--yes]
+          [--no-build] [--no-tests] [--only github|codeberg] [--dry-run] [--yes]
 
-It needs `gh` (GitHub) and `tea` (Codeberg), and a clean `main`.  It makes
-the ZIP, tags the commit `vVERSION`, pushes `main` and the tag, and makes
+It needs `gh` (GitHub) and `tea` (Codeberg), and a clean `main`.  It runs
+the tests (`tools/test.py`, each test file in a process of its own, all at
+once; `--no-tests` leaves them out), makes the ZIP, tags the commit `vVERSION`, pushes `main` and the tag, and makes
 the release on each forge (or keeps the existing one), attaching the ZIP
 and replacing one of the same name.  The ZIP, its signature and
 `SHA256SUMS` are made in `build/release/`, and the deposit for Zenodo in

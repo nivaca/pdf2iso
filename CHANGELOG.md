@@ -7,6 +7,9 @@ The releases, with their zip files, are on
 
 ## Unreleased
 
+- `tools/test.py` runs the tests at once, each test file in a `pytest` of
+  its own; `tools/release.py` runs them so before anything else
+  (`--no-tests` leaves them out).
 - Nothing of a release is kept here any more: `tools/release.py` makes and
   signs the ZIP and `SHA256SUMS` in `build/release/` (not `dist/`), and the
   deposit for Zenodo in `build/zenodo/`, publishes them from there and

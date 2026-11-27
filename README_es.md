@@ -269,13 +269,21 @@ documentos, y un archivo `COMMIT` con el commit del que se hizo.  No
 contiene archivos ocultos (`.git`...), ni lo que se genera al ejecutar o
 editar el programa (`__pycache__`...), ni `build/`, `dist/` y `tools/`.
 
+Las pruebas se corren con
+
+    $ python3 tools/test.py [-j N] [-v] [NOMBRE ...]
+
+cada archivo de pruebas en un `pytest` propio, tantos a la vez como
+procesadores tenga el computador (`-j` lo cambia).
+
 Una versión en GitHub y Codeberg, con el ZIP, se publica con
 
     $ python3 tools/release.py [--redo] [--notes TEXTO | --notes-file ARCHIVO]
-          [--no-build] [--only github|codeberg] [--dry-run] [--yes]
+          [--no-build] [--no-tests] [--only github|codeberg] [--dry-run] [--yes]
 
-Necesita `gh` (GitHub) y `tea` (Codeberg), y una rama `main` limpia.  Hace
-el ZIP, etiqueta el commit como `vVERSION`, sube `main` y la etiqueta, y
+Necesita `gh` (GitHub) y `tea` (Codeberg), y una rama `main` limpia.  Corre
+las pruebas (`tools/test.py`, cada archivo de pruebas en un proceso propio,
+todos a la vez; `--no-tests` las omite), hace el ZIP, etiqueta el commit como `vVERSION`, sube `main` y la etiqueta, y
 crea la versión en cada forja (o conserva la que ya existe), le adjunta
 el ZIP y reemplaza el que tenga el mismo nombre.  El ZIP, su firma y
 `SHA256SUMS` se hacen en `build/release/`, y el depósito para Zenodo en

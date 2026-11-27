@@ -7,6 +7,9 @@ versión 2.0. Las versiones publicadas, con sus archivos zip, están en
 
 ## Sin publicar
 
+- `tools/test.py` corre las pruebas a la vez, cada archivo de pruebas en un
+  `pytest` propio; `tools/release.py` las corre así antes de todo
+  (`--no-tests` las omite).
 - Ya no se guarda aquí nada de una versión: `tools/release.py` hace y firma
   el ZIP y `SHA256SUMS` en `build/release/` (no en `dist/`), y el depósito
   para Zenodo en `build/zenodo/`, los publica desde allí y al final borra
