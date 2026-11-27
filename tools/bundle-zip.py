@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Makes a zip of the program, to distribute it:
-python3 tools/bundle-zip.py [-o FOLDER]
+"""Hace un ZIP del programa, para distribuirlo:
+python3 tools/bundle-zip.py [-o CARPETA]
 
-The zip is build/release/pdf2iso-v.VERSION.zip (the VERSION of
-pdf2iso.py; build/release is made in the program's folder if need be, and
---output gives another folder), with the program in a folder of the same
-name.  It has the script, the licence and the documents, but no hidden
-files or folders (.git ...), none of what is made while the program runs
-or is edited (__pycache__, .bak and .tmp files ...), and nothing that is
-in its folder but not part of it (build/, dist/, tools/, tests/ and packaging/,
-with the public key that signs the releases).  It also has COMMIT,
-the commit it was made from.
+El ZIP es build/release/pdf2iso-v.VERSIÓN.zip (la VERSION de
+pdf2iso.py; build/release se crea en la carpeta del programa si hace
+falta, y --output da otra carpeta), con el programa en una carpeta del
+mismo nombre.  Trae el script, la licencia y los documentos, pero ningún
+archivo ni carpeta oculta (.git ...), nada de lo que se genera al correr
+o editar el programa (__pycache__, archivos .bak y .tmp ...) y nada de lo
+que está en su carpeta sin ser parte de él (build/, dist/, tools/, tests/
+y packaging/, con la clave pública que firma las versiones).  Trae además
+COMMIT, el commit del que se hizo.
 """
 
 import argparse

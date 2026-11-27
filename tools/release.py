@@ -1,59 +1,59 @@
 #!/usr/bin/env python3
-"""Publishes a release of pdf2iso on GitHub (with gh) and on
-Codeberg (with tea): the tag vVERSION (the VERSION of pdf2iso.py),
-signed, with the zip and its signature (FILE.asc), SHA256SUMS and its
-signature, and the public key that checks them, attached; and the
-deposit of the release on Zenodo, as a draft.
+"""Publica una versión de pdf2iso en GitHub (con gh) y en Codeberg (con
+tea): la etiqueta vVERSIÓN (la VERSION de pdf2iso.py), firmada, con el
+ZIP y su firma (ARCHIVO.asc), SHA256SUMS y su firma, y la clave pública
+que los comprueba, adjuntos; y el depósito de la versión en Zenodo, como
+borrador.
 
     python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
                              [--no-build] [--no-tests] [--only github|codeberg]
                              [--no-zenodo] [--dry-run] [--yes]
 
-Everything is signed with the project's key (SIGNING_KEY, the same in all
-the author's projects), and every signature is checked, with only the
-public key published (packaging/RPM-GPG-KEY-pdf2iso), before anything is
-published.
+Todo se firma con la clave del proyecto (SIGNING_KEY, la misma en todos
+los proyectos del autor), y cada firma se comprueba solo con la clave
+pública que se publica (packaging/RPM-GPG-KEY-pdf2iso), antes de publicar
+nada.
 
-In order, each step only if it is needed:
+En orden, cada paso solo si hace falta:
 
-1. checks that the repository is on main, with nothing left to commit,
-   that gh, tea and gpg are installed, that the signing key is in gpg
-   and, unless --no-zenodo, that there is a Zenodo token in
-   $ZENODO_TOKEN or the keyring;
-2. runs the tests, each file in a process of its own, at once
-   (tools/test.py; unless --no-tests);
-3. makes the zip in build/release/ (tools/bundle-zip.py), unless
-   --no-build (then the one in build/release/ is used);
-4. signs it (tools/sign_release.py: build/release/pdf2iso-v.VERSION.zip.asc,
-   and build/release/SHA256SUMS with its .asc), and checks each signature
-   with only the public key; gpg asks for the passphrase;
-5. tags HEAD as vVERSION, with a tag signed with the same key (git tag
-   --sign), and checks it (git tag --verify).  If the tag is there
-   already on another commit, it stops, unless --redo moves it;
-6. collects the deposit for Zenodo in build/zenodo/ (tools/zenodo.py
-   collect: the tree of the tag, signed, with SHA256SUMS and the public
-   key, each signature checked with only that key);
-7. pushes main and the tag to the remote (origin, which pushes to both
-   GitHub and Codeberg; --redo pushes the tag with --force);
-8. on Codeberg, switches releases on for the repository if they are off
-   (new repositories may have them off);
-9. on each forge, makes the release of the tag, or keeps the existing
-   one, and attaches the files to it, replacing those of the same name;
-10. unless --no-zenodo, uploads build/zenodo/ to Zenodo and publishes it
-   (tools/zenodo.py upload --publish), with a new DOI; with --zenodo-draft
-   it is left as a draft, to publish by hand;
-11. deletes build/release/ and build/zenodo/: the forges and Zenodo have
-   what they held, and nothing of a release is kept here (dist/ is not
-   used).
+1. comprueba que el repositorio esté en main, sin nada por confirmar, que
+   gh, tea y gpg estén instalados, que la clave de firma esté en gpg y,
+   salvo con --no-zenodo, que haya un token de Zenodo en $ZENODO_TOKEN o
+   en el llavero;
+2. corre las pruebas, cada archivo en un proceso propio, a la vez
+   (tools/test.py; salvo con --no-tests);
+3. hace el ZIP en build/release/ (tools/bundle-zip.py), salvo con
+   --no-build (entonces se usa el que haya en build/release/);
+4. lo firma (tools/sign_release.py: build/release/pdf2iso-v.VERSIÓN.zip.asc,
+   y build/release/SHA256SUMS con su .asc) y comprueba cada firma solo con
+   la clave pública; gpg pide la frase de contraseña;
+5. pone en HEAD la etiqueta vVERSIÓN, firmada con la misma clave (git tag
+   --sign), y la comprueba (git tag --verify).  Si la etiqueta ya está en
+   otro commit, se detiene, salvo que --redo la mueva;
+6. reúne el depósito para Zenodo en build/zenodo/ (tools/zenodo.py
+   collect: el árbol de la etiqueta, firmado, con SHA256SUMS y la clave
+   pública, y cada firma comprobada solo con esa clave);
+7. sube main y la etiqueta al remoto (origin, que sube a la vez a GitHub
+   y a Codeberg; --redo sube la etiqueta con --force);
+8. en Codeberg, activa las versiones del repositorio si están apagadas
+   (los repositorios nuevos pueden tenerlas así);
+9. en cada forja, hace la versión de la etiqueta, o conserva la que haya,
+   y le adjunta los archivos, en lugar de los que tengan el mismo nombre;
+10. salvo con --no-zenodo, sube build/zenodo/ a Zenodo y lo publica
+   (tools/zenodo.py upload --publish), con un DOI nuevo; con --zenodo-draft
+   queda como borrador, para publicarlo a mano;
+11. borra build/release/ y build/zenodo/: las forjas y Zenodo ya tienen lo
+   que contenían, y aquí no se guarda nada de una versión (dist/ no se
+   usa).
 
-Before doing anything, it shows the commands it will run and asks; --yes
-does not ask, --dry-run only shows them.  The notes of a new release are
---notes or --notes-file (the same on both forges), or else made by GitHub
-from the commits (on Codeberg, none); an existing release keeps its
-notes.
+Antes de hacer nada, muestra las órdenes que va a correr y pregunta; con
+--yes no pregunta, y con --dry-run solo las muestra.  Las notas de una
+versión nueva son --notes o --notes-file (las mismas en las dos forjas)
+o, si no, las que hace GitHub con los commits (en Codeberg, ninguna); una
+versión que ya está conserva sus notas.
 
-The repositories are found from the push addresses of the remote; tea
-uses the login named codeberg unless --tea-login names another.
+Los repositorios salen de las direcciones de subida del remoto; tea usa
+la sesión llamada codeberg, salvo que --tea-login nombre otra.
 """
 
 import argparse
