@@ -2,8 +2,8 @@
 """Publica una versión de pdf2iso en GitHub (con gh) y en Codeberg (con
 tea): la etiqueta vVERSIÓN (la VERSION de pdf2iso.py), firmada, con el
 ZIP y su firma (ARCHIVO.asc), SHA256SUMS y su firma, y la clave pública
-que los comprueba, adjuntos; y el depósito de la versión en Zenodo, como
-borrador.
+que los comprueba, adjuntos; y el depósito de la versión en Zenodo,
+publicado (con --zenodo-draft, solo como borrador).
 
     python3 tools/release.py [--redo] [--notes TEXT | --notes-file FILE]
                              [--no-build] [--no-tests] [--only github|codeberg]
